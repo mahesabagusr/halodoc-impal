@@ -1,0 +1,142 @@
+import * as wrapper from "@/helpers/utils/wrapper";
+import {
+  ERROR as httpError,
+  SUCCESS as http,
+} from "@/helpers/http-status/statusCode";
+import logger from "@/helpers/utils/winston";
+import { Request, Response } from "express";
+import { isValidPayload } from "@/helpers/utils/validator";
+import { LoginUserSchema, RegisterUserSchema } from "@/schemas/user-schema";
+import UserService from "@/modules/Users/services/users";
+import { RegisterUserDto, LoginUserDto } from "@/dtos/user-dto";
+
+export const userRegister = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const payload: RegisterUserDto = { ...req.body };
+
+    const validatePayload = await isValidPayload(payload, RegisterUserSchema);
+
+    if (validatePayload.err) {
+      return wrapper.response(
+        res,
+        "fail",
+        { err: validatePayload.err, data: null },
+        "Invalid Payload",
+        httpError.BAD_REQUEST
+      );
+    }
+
+    const result = await UserService.register(payload);
+
+    if (result.err) {
+      return wrapper.response(
+        res,
+        "fail",
+        result,
+        "User Registration Failed",
+        httpError.BAD_REQUEST
+      );
+    }
+
+    return wrapper.response(
+      res,
+      "success",
+      result,
+      "User Registration Successful",
+      http.CREATED
+    );
+  } catch (err: unknown) {
+    const errorMessage =
+      err instanceof Error ? err.message : "An unexpected error occurred";
+    const error = err instanceof Error ? err : new Error(errorMessage);
+    logger.error(`Unexpected error during user registration: ${errorMessage}`);
+
+    return wrapper.response(
+      res,
+      "fail",
+      { err: error, data: null },
+      "Registration Failed",
+      httpError.INTERNAL_ERROR
+    );
+  }
+};
+
+export const userLogin = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const payload: LoginUserDto = { ...req.body };
+
+    const validatePayload = await isValidPayload(payload, LoginUserSchema);
+
+    if (validatePayload.err) {
+      return wrapper.response(
+        res,
+        "fail",
+        { err: validatePayload.err, data: null },
+        "Invalid Payload",
+        httpError.BAD_REQUEST
+      );
+    }
+
+    const result = await UserService.login(payload);
+
+    if (result.err) {
+      return wrapper.response(
+        res,
+        "fail",
+        result,
+        "Login Failed",
+        httpError.UNAUTHORIZED
+      );
+    }
+
+    return wrapper.response(
+      res,
+      "success",
+      result,
+      "Login Successful",
+      http.OK
+    );
+  } catch (err: unknown) {
+    const errorMessage =
+      err instanceof Error ? err.message : "An unexpected error occurred";
+    const error = err instanceof Error ? err : new Error(errorMessage);
+    logger.error(`Unexpected error during user login: ${errorMessage}`);
+
+    return wrapper.response(
+      res,
+      "fail",
+      { err: error, data: null },
+      "Login Failed",
+      httpError.INTERNAL_ERROR
+    );
+  }
+};
+
+export const userEdit = async (req: Request, res: Response): Promise<void> => {
+  try {
+    return wrapper.response(
+      res,
+      "fail",
+      { err: new Error("Edit user not implemented yet"), data: null },
+      "Feature Not Implemented",
+      httpError.SERVICE_UNAVAILABLE
+    );
+
+  } catch (err: unknown) {
+    const errorMessage =
+      err instanceof Error ? err.message : "An unexpected error occurred";
+    const error = err instanceof Error ? err : new Error(errorMessage);
+    logger.error(`Unexpected error during user edit: ${errorMessage}`);
+
+    return wrapper.response(
+      res,
+      "fail",
+      { err: error, data: null },
+      "Update Failed",
+      httpError.INTERNAL_ERROR
+    );
+  }
+};
