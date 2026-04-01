@@ -4,9 +4,17 @@ import { BadRequestError, NotFoundError } from "@/helpers/error";
 import CartRepository from "@/modules/Pharmacy/repositories/cart";
 import { AddCartItemDto, CheckoutDto } from "@/dtos/cart-dto";
 import { ResponseResult } from "@/interfaces/wrapper-interface";
+import { Prisma } from "@prisma/client";
+import {
+  CartItemWithProduct,
+  CartResponse,
+  OrderWithItems,
+} from "@/interfaces/cart-interface";
 
 export default class CartService {
-  static async getMyCart(userId: number): Promise<ResponseResult<any>> {
+  static async getMyCart(
+    userId: number,
+  ): Promise<ResponseResult<CartResponse>> {
     try {
       const cart = await CartRepository.findCartWithItems(userId);
 
@@ -17,7 +25,7 @@ export default class CartService {
         });
       }
 
-      const totalAmount = cart.items.reduce((acc: number, item: any) => {
+      const totalAmount = cart.items.reduce((acc: number, item) => {
         return acc + item.quantity * item.product.price;
       }, 0);
 
@@ -35,7 +43,7 @@ export default class CartService {
   static async addItem(
     userId: number,
     payload: AddCartItemDto,
-  ): Promise<ResponseResult<any>> {
+  ): Promise<ResponseResult<CartItemWithProduct>> {
     try {
       const product = await CartRepository.findProductById(payload.productId);
 
@@ -65,7 +73,7 @@ export default class CartService {
   static async removeItem(
     userId: number,
     cartItemId: number,
-  ): Promise<ResponseResult<any>> {
+  ): Promise<ResponseResult<string>> {
     try {
       const cart = await CartRepository.findOrCreateCart(userId);
       const deleted = await CartRepository.removeCartItem(cart.id, cartItemId);
@@ -84,79 +92,81 @@ export default class CartService {
   static async checkout(
     userId: number,
     payload: CheckoutDto,
-  ): Promise<ResponseResult<any>> {
+  ): Promise<ResponseResult<OrderWithItems>> {
     try {
-      const result = await prisma.$transaction(async (tx: any) => {
-        const cart = await tx.cart.findUnique({
-          where: { userId },
-          include: {
-            items: {
-              include: {
-                product: true,
-              },
-            },
-          },
-        });
-
-        if (!cart || cart.items.length === 0) {
-          throw new BadRequestError(
-            "Cart kosong, checkout tidak dapat diproses",
-          );
-        }
-
-        for (const item of cart.items) {
-          const deducted = await tx.product.updateMany({
-            where: {
-              id: item.productId,
-              stock: {
-                gte: item.quantity,
-              },
-            },
-            data: {
-              stock: {
-                decrement: item.quantity,
+      const result = await prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          const cart = await tx.cart.findUnique({
+            where: { userId },
+            include: {
+              items: {
+                include: {
+                  product: true,
+                },
               },
             },
           });
 
-          if (deducted.count === 0) {
+          if (!cart || cart.items.length === 0) {
             throw new BadRequestError(
-              `Stock produk ${item.product.name} tidak mencukupi`,
+              "Cart kosong, checkout tidak dapat diproses",
             );
           }
-        }
 
-        const totalAmount = cart.items.reduce((acc: number, item: any) => {
-          return acc + item.quantity * item.product.price;
-        }, 0);
+          for (const item of cart.items) {
+            const deducted = await tx.product.updateMany({
+              where: {
+                id: item.productId,
+                stock: {
+                  gte: item.quantity,
+                },
+              },
+              data: {
+                stock: {
+                  decrement: item.quantity,
+                },
+              },
+            });
 
-        const order = await tx.order.create({
-          data: {
-            userId,
-            totalAmount,
-            shippingAddress: payload.shippingAddress,
-            status: "PENDING",
-            items: {
-              create: cart.items.map((item: any) => ({
-                productId: item.productId,
-                quantity: item.quantity,
-                price: item.product.price,
-              })),
+            if (deducted.count === 0) {
+              throw new BadRequestError(
+                `Stock produk ${item.product.name} tidak mencukupi`,
+              );
+            }
+          }
+
+          const totalAmount = cart.items.reduce((acc: number, item) => {
+            return acc + item.quantity * item.product.price;
+          }, 0);
+
+          const order = await tx.order.create({
+            data: {
+              userId,
+              totalAmount,
+              shippingAddress: payload.shippingAddress,
+              status: "PENDING",
+              items: {
+                create: cart.items.map((item) => ({
+                  productId: item.productId,
+                  quantity: item.quantity,
+                  price: item.product.price,
+                })),
+              },
             },
-          },
-          include: {
-            items: true,
-          },
-        });
+            include: {
+              items: true,
+            },
+          });
 
-        await tx.cartItem.deleteMany({
-          where: {
-            cartId: cart.id,
-          },
-        });
+          await tx.cartItem.deleteMany({
+            where: {
+              cartId: cart.id,
+            },
+          });
 
-        return order;
-      });
+          return order;
+        },
+      );
 
       return wrapper.data(result);
     } catch (err) {

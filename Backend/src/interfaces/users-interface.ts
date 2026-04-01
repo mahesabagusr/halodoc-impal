@@ -19,3 +19,17 @@ export interface AuthenticatedUser {
   email: string;
   role: "PATIENT" | "DOCTOR" | "ADMIN";
 }
+
+export interface RegisteredUser {
+  id: number;
+  email: string;
+  role: "PATIENT" | "DOCTOR" | "ADMIN";
+}
+
+export interface UserListItem {
+  id: number;
+  fullName: string;
+  email: string;
+  role: "PATIENT" | "DOCTOR" | "ADMIN";
+  createdAt: Date;
+}

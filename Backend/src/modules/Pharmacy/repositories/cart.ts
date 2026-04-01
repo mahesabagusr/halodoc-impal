@@ -1,7 +1,26 @@
 import prisma from "@/helpers/db/prisma/client";
+import { Cart, Prisma } from "@prisma/client";
+
+type CartWithItems = Prisma.CartGetPayload<{
+  include: {
+    items: {
+      include: {
+        product: true;
+      };
+    };
+  };
+}>;
+type CartItemWithProduct = Prisma.CartItemGetPayload<{
+  include: {
+    product: true;
+  };
+}>;
 
 export default class CartRepository {
-  static async findOrCreateCart(userId: number, tx?: any) {
+  static async findOrCreateCart(
+    userId: number,
+    tx?: Prisma.TransactionClient,
+  ): Promise<Cart> {
     const client = tx ?? prisma;
 
     const existing = await client.cart.findUnique({
@@ -28,7 +47,7 @@ export default class CartRepository {
           orderBy: { createdAt: "desc" },
         },
       },
-    });
+    }) as Promise<CartWithItems | null>;
   }
 
   static async findProductById(productId: number) {
@@ -41,7 +60,7 @@ export default class CartRepository {
     cartId: number,
     productId: number,
     quantity: number,
-  ) {
+  ): Promise<CartItemWithProduct> {
     return prisma.cartItem.upsert({
       where: {
         cartId_productId: {

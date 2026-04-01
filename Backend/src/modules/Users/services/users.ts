@@ -6,13 +6,17 @@ import { BadRequestError } from "@/helpers/error";
 import logger from "@/helpers/utils/winston";
 import { LoginUserDto, RegisterUserDto } from "@/dtos/user-dto";
 import { ResponseResult } from "@/interfaces/wrapper-interface";
-import { JwtToken } from "@/interfaces/users-interface";
+import {
+  JwtToken,
+  RegisteredUser,
+  UserListItem,
+} from "@/interfaces/users-interface";
 import { createToken } from "@/middlewares/jwt";
 
 export default class UserService {
   static async register(
     payload: RegisterUserDto,
-  ): Promise<ResponseResult<{ id: number; email: string; role: string }>> {
+  ): Promise<ResponseResult<RegisteredUser>> {
     try {
       const { fullName, email, password } = payload;
 
@@ -92,7 +96,7 @@ export default class UserService {
     }
   }
 
-  static async getAllUsers() {
+  static async getAllUsers(): Promise<ResponseResult<UserListItem[]>> {
     try {
       const users = await prisma.user.findMany({
         select: {
