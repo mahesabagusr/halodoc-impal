@@ -5,7 +5,7 @@ import { ValidationResult } from "@/interfaces/users-interface";
 
 export const isValidPayload = async <T>(
   payload: T,
-  model: ZodSchema<T>
+  model: ZodSchema<T>,
 ): Promise<ValidationResult<T>> => {
   try {
     console.log(payload);
@@ -16,7 +16,8 @@ export const isValidPayload = async <T>(
   } catch (err) {
     if (err instanceof z.ZodError) {
       const errorMessage =
-        err.errors.map((err) => err.message).join(", ") || "Invalid Input Data";
+        err.issues.map((issue) => issue.message).join(", ") ||
+        "Invalid Input Data";
 
       return wrapper.error(new BadRequestError(errorMessage));
     }

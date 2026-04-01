@@ -1,19 +1,17 @@
 import { z } from "zod";
 
 export const RegisterUserSchema = z.object({
-  username: z.string().min(8, "Username minimal 8 Karakter"),
+  fullName: z.string().min(3, "Full name minimal 3 karakter"),
   email: z.string().email("email tidak valid"),
   password: z.string().min(8, "Password minimal 8 Karakter"),
-  fullname: z.string().min(8, "FullName minimal 8 Karakter"),
-  signature: z.string().optional(),
+  role: z.enum(["PATIENT", "DOCTOR", "ADMIN"]).optional(),
 });
 
 export const LoginUserSchema = z.object({
-  identifier: z.union([z.string().email("Email Tidak Valid"), z.string()]),
+  email: z.string().email("Email Tidak Valid"),
   password: z.string().min(8, "Password minimal 8 Karakter"),
 });
 
 export const EditUserSchema = z.object({
-  username : z.string().min(8, "Username minimal 8 Karakter").optional(),
-  fullname : z.string().min(8, "Nama Lengkap minimal 8 Karakter").optional(),
+  fullName: z.string().min(3, "Nama Lengkap minimal 3 Karakter").optional(),
 });

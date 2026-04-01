@@ -10,7 +10,12 @@ export interface ValidationResult<T> {
   data?: T | null;
 }
 
-
 export interface JwtToken {
   token: string;
+}
+
+export interface AuthenticatedUser {
+  userId: number;
+  email: string;
+  role: "PATIENT" | "DOCTOR" | "ADMIN";
 }
