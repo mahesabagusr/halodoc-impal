@@ -28,7 +28,7 @@ function App() {
           Count is {count}
         </button>
       </section>
-
+      // Decorative elements - not part of the main content
       <div className="ticks"></div>
 
       <section id="next-steps">
