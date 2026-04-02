@@ -6,8 +6,7 @@ import { ERROR as httpError } from "@/helpers/http-status/statusCode";
 import { config } from "@/helpers/infra/global-config";
 import { TokenData, TokenResponse } from "@/interfaces/jwt-interface";
 
-const jwtSecret =
-  process.env.JWT_SECRET || config.key.privateKey || "dev-secret";
+const jwtSecret = config.key.jwtSecret || config.key.privateKey || "dev-secret";
 
 export const createToken = (data: TokenData): TokenResponse => {
   const accessToken: string = jwt.sign(

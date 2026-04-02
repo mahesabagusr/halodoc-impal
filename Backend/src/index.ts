@@ -1,9 +1,11 @@
 import express, { Application, Request, Response } from "express";
 import userRoutes from "@/routes/users";
 import pharmacyRoutes from "@/routes/pharmacy";
+import { config } from "@/helpers/infra/global-config";
 
 const app: Application = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(config.express.port ?? "3000");
+const HOST = config.express.host ?? "localhost";
 
 app.use(express.json());
 
@@ -14,6 +16,6 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/pharmacy", pharmacyRoutes);
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Server running on http://${HOST}:${PORT}`);
 });

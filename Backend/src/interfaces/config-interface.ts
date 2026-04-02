@@ -15,12 +15,24 @@ interface DbConfig {
 }
 
 interface KeyConfig {
+  jwtSecret?: string;
   privateKey?: string;
   publicKey?: string;
+}
+
+interface PrismaConfig {
+  databaseUrl?: string;
+  directUrl?: string;
+}
+
+interface AppConfig {
+  nodeEnv?: string;
 }
 
 export interface Config {
   express: ExpressConfig;
   db: DbConfig;
   key: KeyConfig;
+  prisma: PrismaConfig;
+  app: AppConfig;
 }
