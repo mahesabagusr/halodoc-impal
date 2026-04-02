@@ -12,37 +12,64 @@ import {
 } from "@/interfaces/users-interface";
 import { createToken } from "@/middlewares/jwt";
 import UsersRepository from "@/modules/Users/repositories/users";
+import { Role } from "@prisma/client";
 
 export default class UserService {
+  static async createUserByRole(
+    payload: RegisterUserDto,
+    role: Role,
+  ): Promise<ResponseResult<RegisteredUser>> {
+    const { fullName, email, password } = payload;
+
+    logger.info(`Creating Account: ${email}`);
+
+    const existingUser = await UsersRepository.findByEmail(email);
+
+    if (existingUser) {
+      return wrapper.error(new UnauthorizedError("Email Already Exists"));
+    }
+
+    const hashPassword: string = await bcrypt.hash(password, 10);
+
+    const createUser = await UsersRepository.createUser({
+      fullName,
+      email,
+      password: hashPassword,
+      role,
+    });
+
+    if (!createUser) {
+      logger.error(`Failed to create user with email ${email}`);
+      return wrapper.error(new BadRequestError("Failed to create user"));
+    }
+
+    return wrapper.data(createUser);
+  }
+
   static async register(
     payload: RegisterUserDto,
   ): Promise<ResponseResult<RegisteredUser>> {
     try {
-      const { fullName, email, password } = payload;
-
-      logger.info(`Creating Account: ${email}`);
-
-      const existingUser = await UsersRepository.findByEmail(email);
-
-      if (existingUser) {
-        return wrapper.error(new UnauthorizedError("Email Already Exists"));
+      if (payload.role && payload.role !== "PATIENT") {
+        return wrapper.error(
+          new UnauthorizedError(
+            "Only PATIENT self-registration is allowed. ADMIN is required to create doctor/admin accounts",
+          ),
+        );
       }
 
-      const hashPassword: string = await bcrypt.hash(password, 10);
+      return await UserService.createUserByRole(payload, "PATIENT");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return wrapper.error(new BadRequestError(message));
+    }
+  }
 
-      const createUser = await UsersRepository.createUser({
-        fullName,
-        email,
-        password: hashPassword,
-        role: "PATIENT",
-      });
-
-      if (!createUser) {
-        logger.error(`Failed to create user with email ${email}`);
-        return wrapper.error(new BadRequestError("Failed to create user"));
-      }
-
-      return wrapper.data(createUser);
+  static async registerDoctor(
+    payload: RegisterUserDto,
+  ): Promise<ResponseResult<RegisteredUser>> {
+    try {
+      return await UserService.createUserByRole(payload, "DOCTOR");
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return wrapper.error(new BadRequestError(message));

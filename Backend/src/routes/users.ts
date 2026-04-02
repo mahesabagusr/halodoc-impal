@@ -1,5 +1,6 @@
 import { Request, Response, Router } from "express";
 import {
+  adminCreateDoctor,
   getAllUsers,
   userEdit,
   userLogin,
@@ -18,6 +19,12 @@ router.get("/health", (req: Request, res: Response) => {
 
 router.post("/register", userRegister);
 router.post("/login", userLogin);
+router.post(
+  "/admin/doctors",
+  verifyToken,
+  authorize(["ADMIN"]),
+  adminCreateDoctor,
+);
 router.post("/edit", verifyToken, userEdit);
 
 router.get("/", verifyToken, authorize(["ADMIN"]), getAllUsers);

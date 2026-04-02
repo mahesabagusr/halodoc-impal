@@ -64,11 +64,65 @@ describe("UserService", () => {
       password: "password123",
     });
 
+    expect(usersRepoMock.createUser).toHaveBeenCalledWith({
+      fullName: "New User",
+      email: "new@mail.com",
+      password: "hashed",
+      role: "PATIENT",
+    });
+
     expect(result.err).toBeNull();
     expect(result.data).toEqual({
       id: 1,
       email: "new@mail.com",
       role: "PATIENT",
+    });
+  });
+
+  it("register should reject non-patient role on public registration", async () => {
+    const result = await UserService.register({
+      fullName: "Doctor User",
+      email: "doctor@mail.com",
+      password: "password123",
+      role: "DOCTOR",
+    });
+
+    expect(result.err?.message).toContain(
+      "Only PATIENT self-registration is allowed",
+    );
+    expect(result.data).toBeNull();
+    expect(usersRepoMock.createUser).not.toHaveBeenCalled();
+  });
+
+  it("registerDoctor should create doctor account", async () => {
+    const bcryptMock = bcrypt as any;
+
+    usersRepoMock.findByEmail.mockResolvedValue(null);
+    bcryptMock.hash.mockResolvedValue("hashed-doctor");
+    usersRepoMock.createUser.mockResolvedValue({
+      id: 2,
+      email: "doctor@mail.com",
+      role: "DOCTOR",
+    });
+
+    const result = await UserService.registerDoctor({
+      fullName: "Doctor User",
+      email: "doctor@mail.com",
+      password: "password123",
+    });
+
+    expect(usersRepoMock.createUser).toHaveBeenCalledWith({
+      fullName: "Doctor User",
+      email: "doctor@mail.com",
+      password: "hashed-doctor",
+      role: "DOCTOR",
+    });
+
+    expect(result.err).toBeNull();
+    expect(result.data).toEqual({
+      id: 2,
+      email: "doctor@mail.com",
+      role: "DOCTOR",
     });
   });
 
