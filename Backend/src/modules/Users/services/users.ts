@@ -1,5 +1,4 @@
 import * as wrapper from "@/helpers/utils/wrapper";
-import prisma from "@/helpers/db/prisma/client";
 import { NotFoundError, UnauthorizedError } from "@/helpers/error";
 import bcrypt from "bcrypt";
 import { BadRequestError } from "@/helpers/error";
@@ -12,6 +11,7 @@ import {
   UserListItem,
 } from "@/interfaces/users-interface";
 import { createToken } from "@/middlewares/jwt";
+import UsersRepository from "@/modules/Users/repositories/users";
 
 export default class UserService {
   static async register(
@@ -22,11 +22,7 @@ export default class UserService {
 
       logger.info(`Creating Account: ${email}`);
 
-      const existingUser = await prisma.user.findFirst({
-        where: {
-          email,
-        },
-      });
+      const existingUser = await UsersRepository.findByEmail(email);
 
       if (existingUser) {
         return wrapper.error(new UnauthorizedError("Email Already Exists"));
@@ -34,18 +30,11 @@ export default class UserService {
 
       const hashPassword: string = await bcrypt.hash(password, 10);
 
-      const createUser = await prisma.user.create({
-        data: {
-          fullName,
-          email,
-          password: hashPassword,
-          role: "PATIENT",
-        },
-        select: {
-          id: true,
-          email: true,
-          role: true,
-        },
+      const createUser = await UsersRepository.createUser({
+        fullName,
+        email,
+        password: hashPassword,
+        role: "PATIENT",
       });
 
       if (!createUser) {
@@ -64,11 +53,7 @@ export default class UserService {
     try {
       const { password, email } = payload;
 
-      const user = await prisma.user.findFirst({
-        where: {
-          email,
-        },
-      });
+      const user = await UsersRepository.findByEmail(email);
 
       if (!user) {
         return wrapper.error(new NotFoundError("User not found"));
@@ -98,16 +83,7 @@ export default class UserService {
 
   static async getAllUsers(): Promise<ResponseResult<UserListItem[]>> {
     try {
-      const users = await prisma.user.findMany({
-        select: {
-          id: true,
-          fullName: true,
-          email: true,
-          role: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: "desc" },
-      });
+      const users = await UsersRepository.findAllUsers();
 
       return wrapper.data(users);
     } catch (err) {

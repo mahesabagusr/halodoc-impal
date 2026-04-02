@@ -7,6 +7,7 @@ export default defineConfig({
     globals: true,
     include: ["tests/**/*.test.ts"],
     clearMocks: true,
+    reporters: ["verbose"],
   },
   resolve: {
     alias: {

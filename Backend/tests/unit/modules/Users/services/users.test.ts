@@ -3,18 +3,16 @@ import bcrypt from "bcrypt";
 import * as jwtModule from "@/middlewares/jwt";
 import UserService from "@/modules/Users/services/users";
 
-const { prismaMock } = vi.hoisted(() => ({
-  prismaMock: {
-    user: {
-      findFirst: vi.fn(),
-      create: vi.fn(),
-      findMany: vi.fn(),
-    },
+const { usersRepoMock } = vi.hoisted(() => ({
+  usersRepoMock: {
+    findByEmail: vi.fn(),
+    createUser: vi.fn(),
+    findAllUsers: vi.fn(),
   },
 }));
 
-vi.mock("@/helpers/db/prisma/client", () => ({
-  default: prismaMock,
+vi.mock("@/modules/Users/repositories/users", () => ({
+  default: usersRepoMock,
 }));
 
 vi.mock("bcrypt", () => ({
@@ -34,7 +32,7 @@ describe("UserService", () => {
   });
 
   it("register should return unauthorized error if email exists", async () => {
-    prismaMock.user.findFirst.mockResolvedValue({
+    usersRepoMock.findByEmail.mockResolvedValue({
       id: 1,
       email: "existing@mail.com",
     });
@@ -52,9 +50,9 @@ describe("UserService", () => {
   it("register should create user when email is new", async () => {
     const bcryptMock = bcrypt as any;
 
-    prismaMock.user.findFirst.mockResolvedValue(null);
+    usersRepoMock.findByEmail.mockResolvedValue(null);
     bcryptMock.hash.mockResolvedValue("hashed");
-    prismaMock.user.create.mockResolvedValue({
+    usersRepoMock.createUser.mockResolvedValue({
       id: 1,
       email: "new@mail.com",
       role: "PATIENT",
@@ -77,7 +75,7 @@ describe("UserService", () => {
   it("login should return token when credentials valid", async () => {
     const bcryptMock = bcrypt as any;
 
-    prismaMock.user.findFirst.mockResolvedValue({
+    usersRepoMock.findByEmail.mockResolvedValue({
       id: 3,
       email: "user@mail.com",
       password: "hashed",
@@ -96,7 +94,7 @@ describe("UserService", () => {
   });
 
   it("getAllUsers should return users list", async () => {
-    prismaMock.user.findMany.mockResolvedValue([
+    usersRepoMock.findAllUsers.mockResolvedValue([
       { id: 1, email: "a@mail.com" },
     ]);
 

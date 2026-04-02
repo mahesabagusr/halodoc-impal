@@ -1,21 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import CartService from "@/modules/Pharmacy/services/cart";
 
-const { prismaMock, cartRepoMock } = vi.hoisted(() => ({
-  prismaMock: {
-    $transaction: vi.fn(),
-  },
+const { cartRepoMock } = vi.hoisted(() => ({
   cartRepoMock: {
     findCartWithItems: vi.fn(),
     findProductById: vi.fn(),
     findOrCreateCart: vi.fn(),
     upsertCartItem: vi.fn(),
     removeCartItem: vi.fn(),
+    checkout: vi.fn(),
   },
-}));
-
-vi.mock("@/helpers/db/prisma/client", () => ({
-  default: prismaMock,
 }));
 
 vi.mock("@/modules/Pharmacy/repositories/cart", () => ({
@@ -65,15 +59,9 @@ describe("CartService", () => {
   });
 
   it("checkout should fail when cart is empty", async () => {
-    prismaMock.$transaction.mockImplementation(async (callback: any) => {
-      const tx = {
-        cart: {
-          findUnique: vi.fn().mockResolvedValue({ id: 1, items: [] }),
-        },
-      };
-
-      return callback(tx);
-    });
+    cartRepoMock.checkout.mockRejectedValue(
+      new Error("Cart kosong, checkout tidak dapat diproses"),
+    );
 
     const result = await CartService.checkout(1, {
       shippingAddress: "Jakarta Selatan",
@@ -84,34 +72,10 @@ describe("CartService", () => {
   });
 
   it("checkout should return order data when successful", async () => {
-    prismaMock.$transaction.mockImplementation(async (callback: any) => {
-      const tx = {
-        cart: {
-          findUnique: vi.fn().mockResolvedValue({
-            id: 1,
-            items: [
-              {
-                productId: 10,
-                quantity: 2,
-                product: { name: "Paracetamol", price: 10000 },
-              },
-            ],
-          }),
-        },
-        product: {
-          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
-        },
-        order: {
-          create: vi
-            .fn()
-            .mockResolvedValue({ id: 55, totalAmount: 20000, items: [] }),
-        },
-        cartItem: {
-          deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
-        },
-      };
-
-      return callback(tx);
+    cartRepoMock.checkout.mockResolvedValue({
+      id: 55,
+      totalAmount: 20000,
+      items: [],
     });
 
     const result = await CartService.checkout(1, {
