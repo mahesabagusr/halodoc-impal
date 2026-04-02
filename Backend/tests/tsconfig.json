@@ -1,0 +1,21 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "..",
+    "ignoreDeprecations": "6.0",
+    "baseUrl": "../src",
+    "paths": {
+      "@/*": ["./*"],
+      "@/modules/*": ["modules/*"],
+      "@/helpers/*": ["helpers/*"],
+      "@/interfaces/*": ["interfaces/*"],
+      "@/middlewares/*": ["middlewares/*"],
+      "@/schemas/*": ["schemas/*"],
+      "@/dtos/*": ["dtos/*"],
+      "@/routes/*": ["routes/*"]
+    }
+  },
+  "include": ["unit/**/*.ts", "../src/types/**/*.d.ts"],
+  "exclude": []
+}

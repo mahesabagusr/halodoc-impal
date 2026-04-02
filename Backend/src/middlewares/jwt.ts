@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import fs from "fs";
 import jwt, { JwtPayload, VerifyErrors } from "jsonwebtoken";
 import * as wrapper from "@/helpers/utils/wrapper";
 import Unauthorized from "@/helpers/error/unautorizedError";
@@ -7,18 +6,18 @@ import { ERROR as httpError } from "@/helpers/http-status/statusCode";
 import { config } from "@/helpers/infra/global-config";
 import { TokenData, TokenResponse } from "@/interfaces/jwt-interface";
 
-const getKey = (keyPath: string) => fs.readFileSync(keyPath, "utf8");
-const privateKey = getKey(config.key.privateKey!);
+const jwtSecret =
+  process.env.JWT_SECRET || config.key.privateKey || "dev-secret";
 
 export const createToken = (data: TokenData): TokenResponse => {
   const accessToken: string = jwt.sign(
     {
-      username: data.username,
+      userId: data.userId,
       email: data.email,
-      signature: data.signature,
+      role: data.role,
     },
-    privateKey as string,
-    { algorithm: "RS256", expiresIn: "1d" }
+    jwtSecret,
+    { expiresIn: "1d" },
   );
 
   return { accessToken };
@@ -26,14 +25,14 @@ export const createToken = (data: TokenData): TokenResponse => {
 
 export const decodeToken = (token: string): JwtPayload | string => {
   const data: string = token.split(" ")[1];
-  const decode: string | JwtPayload = jwt.verify(data, privateKey);
+  const decode: string | JwtPayload = jwt.verify(data, jwtSecret);
   return decode;
 };
 
 export const verifyToken = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { authorization } = req.headers;
@@ -46,11 +45,11 @@ export const verifyToken = (
         "fail",
         error,
         "Token Verification Failed",
-        httpError.UNAUTHORIZED
+        httpError.UNAUTHORIZED,
       );
     }
 
-    jwt.verify(token, privateKey, (err: VerifyErrors | null) => {
+    jwt.verify(token, jwtSecret, (err: VerifyErrors | null, decoded) => {
       if (err) {
         const error = wrapper.error(new Unauthorized("Invalid Token" + err));
         return wrapper.response(
@@ -58,9 +57,21 @@ export const verifyToken = (
           "fail",
           error,
           "Token Verification Failed",
-          httpError.NOT_FOUND
+          httpError.NOT_FOUND,
         );
       }
+
+      const payload = decoded as JwtPayload & {
+        userId: number;
+        email: string;
+        role: "PATIENT" | "DOCTOR" | "ADMIN";
+      };
+
+      req.user = {
+        userId: payload.userId,
+        email: payload.email,
+        role: payload.role,
+      };
 
       next();
     });
@@ -71,7 +82,7 @@ export const verifyToken = (
       "fail",
       error,
       "Token Verification Failed",
-      httpError.NOT_FOUND
+      httpError.NOT_FOUND,
     );
   }
 };

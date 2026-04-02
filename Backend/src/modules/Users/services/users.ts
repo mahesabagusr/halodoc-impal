@@ -1,52 +1,40 @@
 import * as wrapper from "@/helpers/utils/wrapper";
-import prisma from "@/helpers/db/prisma/client";
 import { NotFoundError, UnauthorizedError } from "@/helpers/error";
-import { nanoid } from "nanoid";
 import bcrypt from "bcrypt";
 import { BadRequestError } from "@/helpers/error";
 import logger from "@/helpers/utils/winston";
 import { LoginUserDto, RegisterUserDto } from "@/dtos/user-dto";
 import { ResponseResult } from "@/interfaces/wrapper-interface";
-import { JwtToken } from "@/interfaces/users-interface";
+import {
+  JwtToken,
+  RegisteredUser,
+  UserListItem,
+} from "@/interfaces/users-interface";
 import { createToken } from "@/middlewares/jwt";
+import UsersRepository from "@/modules/Users/repositories/users";
 
 export default class UserService {
   static async register(
     payload: RegisterUserDto,
-  ): Promise<ResponseResult<string>> {
+  ): Promise<ResponseResult<RegisteredUser>> {
     try {
-      const { username, email, password } = payload;
+      const { fullName, email, password } = payload;
 
-      logger.info(`Creating Account: ${username}`);
+      logger.info(`Creating Account: ${email}`);
 
-      const existingUser = await prisma.user.findFirst({
-        where: {
-          OR: [{ email }, { username }],
-        },
-      });
+      const existingUser = await UsersRepository.findByEmail(email);
 
       if (existingUser) {
-        const message =
-          existingUser.email === email
-            ? "Email Already Exists"
-            : "Username Already Exists";
-        return wrapper.error(new UnauthorizedError(message));
+        return wrapper.error(new UnauthorizedError("Email Already Exists"));
       }
-
-      const signature: string = nanoid(4);
 
       const hashPassword: string = await bcrypt.hash(password, 10);
 
-      const createUser = await prisma.user.create({
-        data: {
-          username,
-          fullname: username,
-          email,
-          password: hashPassword,
-          signature: signature,
-          created_at: new Date(),
-          updated_at: new Date(),
-        },
+      const createUser = await UsersRepository.createUser({
+        fullName,
+        email,
+        password: hashPassword,
+        role: "PATIENT",
       });
 
       if (!createUser) {
@@ -54,7 +42,7 @@ export default class UserService {
         return wrapper.error(new BadRequestError("Failed to create user"));
       }
 
-      return wrapper.data("Register Successfully");
+      return wrapper.data(createUser);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return wrapper.error(new BadRequestError(message));
@@ -63,13 +51,9 @@ export default class UserService {
 
   static async login(payload: LoginUserDto): Promise<ResponseResult<JwtToken>> {
     try {
-      const { password, identifier } = payload;
+      const { password, email } = payload;
 
-      const user = await prisma.user.findFirst({
-        where: {
-          OR: [{ username: identifier }, { email: identifier }],
-        },
-      });
+      const user = await UsersRepository.findByEmail(email);
 
       if (!user) {
         return wrapper.error(new NotFoundError("User not found"));
@@ -86,11 +70,22 @@ export default class UserService {
       }
 
       const { accessToken } = await createToken({
-        username: user.username,
+        userId: user.id,
         email: user.email,
-        signature: user.signature ?? undefined,
+        role: user.role,
       });
       return wrapper.data({ token: accessToken });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return wrapper.error(new BadRequestError(message));
+    }
+  }
+
+  static async getAllUsers(): Promise<ResponseResult<UserListItem[]>> {
+    try {
+      const users = await UsersRepository.findAllUsers();
+
+      return wrapper.data(users);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return wrapper.error(new BadRequestError(message));

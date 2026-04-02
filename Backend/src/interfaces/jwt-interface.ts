@@ -1,7 +1,7 @@
 export interface TokenData {
-  email?: string;
-  username?: string;
-  signature?: string;
+  userId: number;
+  email: string;
+  role: "PATIENT" | "DOCTOR" | "ADMIN";
 }
 
 export interface TokenResponse {

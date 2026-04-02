@@ -12,7 +12,7 @@ import { RegisterUserDto, LoginUserDto } from "@/dtos/user-dto";
 
 export const userRegister = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const payload: RegisterUserDto = { ...req.body };
@@ -25,7 +25,7 @@ export const userRegister = async (
         "fail",
         { err: validatePayload.err, data: null },
         "Invalid Payload",
-        httpError.BAD_REQUEST
+        httpError.BAD_REQUEST,
       );
     }
 
@@ -37,7 +37,7 @@ export const userRegister = async (
         "fail",
         result,
         "User Registration Failed",
-        httpError.BAD_REQUEST
+        httpError.BAD_REQUEST,
       );
     }
 
@@ -46,7 +46,7 @@ export const userRegister = async (
       "success",
       result,
       "User Registration Successful",
-      http.CREATED
+      http.CREATED,
     );
   } catch (err: unknown) {
     const errorMessage =
@@ -59,7 +59,7 @@ export const userRegister = async (
       "fail",
       { err: error, data: null },
       "Registration Failed",
-      httpError.INTERNAL_ERROR
+      httpError.INTERNAL_ERROR,
     );
   }
 };
@@ -76,7 +76,7 @@ export const userLogin = async (req: Request, res: Response): Promise<void> => {
         "fail",
         { err: validatePayload.err, data: null },
         "Invalid Payload",
-        httpError.BAD_REQUEST
+        httpError.BAD_REQUEST,
       );
     }
 
@@ -88,7 +88,7 @@ export const userLogin = async (req: Request, res: Response): Promise<void> => {
         "fail",
         result,
         "Login Failed",
-        httpError.UNAUTHORIZED
+        httpError.UNAUTHORIZED,
       );
     }
 
@@ -97,7 +97,7 @@ export const userLogin = async (req: Request, res: Response): Promise<void> => {
       "success",
       result,
       "Login Successful",
-      http.OK
+      http.OK,
     );
   } catch (err: unknown) {
     const errorMessage =
@@ -110,7 +110,7 @@ export const userLogin = async (req: Request, res: Response): Promise<void> => {
       "fail",
       { err: error, data: null },
       "Login Failed",
-      httpError.INTERNAL_ERROR
+      httpError.INTERNAL_ERROR,
     );
   }
 };
@@ -122,9 +122,8 @@ export const userEdit = async (req: Request, res: Response): Promise<void> => {
       "fail",
       { err: new Error("Edit user not implemented yet"), data: null },
       "Feature Not Implemented",
-      httpError.SERVICE_UNAVAILABLE
+      httpError.SERVICE_UNAVAILABLE,
     );
-
   } catch (err: unknown) {
     const errorMessage =
       err instanceof Error ? err.message : "An unexpected error occurred";
@@ -136,7 +135,41 @@ export const userEdit = async (req: Request, res: Response): Promise<void> => {
       "fail",
       { err: error, data: null },
       "Update Failed",
-      httpError.INTERNAL_ERROR
+      httpError.INTERNAL_ERROR,
+    );
+  }
+};
+
+export const getAllUsers = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const result = await UserService.getAllUsers();
+
+    if (result.err) {
+      return wrapper.response(
+        res,
+        "fail",
+        result,
+        "Failed to fetch users",
+        httpError.BAD_REQUEST,
+      );
+    }
+
+    return wrapper.response(res, "success", result, "Users fetched", http.OK);
+  } catch (err: unknown) {
+    const errorMessage =
+      err instanceof Error ? err.message : "An unexpected error occurred";
+    const error = err instanceof Error ? err : new Error(errorMessage);
+    logger.error(`Unexpected error during users fetch: ${errorMessage}`);
+
+    return wrapper.response(
+      res,
+      "fail",
+      { err: error, data: null },
+      "Fetch users failed",
+      httpError.INTERNAL_ERROR,
     );
   }
 };
