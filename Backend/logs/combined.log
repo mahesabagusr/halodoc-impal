@@ -26,3 +26,6 @@
 2026-04-03 02:55:34 [info]: Creating Account: patient@example.com
 2026-04-03 02:55:43 [info]: Creating Account: doctor@example.com
 2026-04-03 02:56:07 [info]: Creating Account: admin@example.com
+2026-04-03 03:02:24 [info]: Creating Account: existing@mail.com
+2026-04-03 03:02:24 [info]: Creating Account: new@mail.com
+2026-04-03 03:02:24 [info]: Creating Account: doctor@mail.com

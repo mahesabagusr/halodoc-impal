@@ -157,13 +157,69 @@ export const adminCreateDoctor = async (
     const errorMessage =
       err instanceof Error ? err.message : "An unexpected error occurred";
     const error = err instanceof Error ? err : new Error(errorMessage);
-    logger.error(`Unexpected error during doctor registration: ${errorMessage}`);
+    logger.error(
+      `Unexpected error during doctor registration: ${errorMessage}`,
+    );
 
     return wrapper.response(
       res,
       "fail",
       { err: error, data: null },
       "Doctor Registration Failed",
+      httpError.INTERNAL_ERROR,
+    );
+  }
+};
+
+export const adminCreateAdmin = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const payload: RegisterUserDto = { ...req.body };
+
+    const validatePayload = await isValidPayload(payload, RegisterUserSchema);
+
+    if (validatePayload.err) {
+      return wrapper.response(
+        res,
+        "fail",
+        { err: validatePayload.err, data: null },
+        "Invalid Payload",
+        httpError.BAD_REQUEST,
+      );
+    }
+
+    const result = await UserService.registerAdmin(payload);
+
+    if (result.err) {
+      return wrapper.response(
+        res,
+        "fail",
+        result,
+        "Admin Registration Failed",
+        httpError.BAD_REQUEST,
+      );
+    }
+
+    return wrapper.response(
+      res,
+      "success",
+      result,
+      "Admin Registration Successful",
+      http.CREATED,
+    );
+  } catch (err: unknown) {
+    const errorMessage =
+      err instanceof Error ? err.message : "An unexpected error occurred";
+    const error = err instanceof Error ? err : new Error(errorMessage);
+    logger.error(`Unexpected error during admin registration: ${errorMessage}`);
+
+    return wrapper.response(
+      res,
+      "fail",
+      { err: error, data: null },
+      "Admin Registration Failed",
       httpError.INTERNAL_ERROR,
     );
   }

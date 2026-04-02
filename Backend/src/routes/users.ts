@@ -1,5 +1,6 @@
 import { Request, Response, Router } from "express";
 import {
+  adminCreateAdmin,
   adminCreateDoctor,
   getAllUsers,
   userEdit,
@@ -24,6 +25,12 @@ router.post(
   verifyToken,
   authorize(["ADMIN"]),
   adminCreateDoctor,
+);
+router.post(
+  "/admin/admins",
+  verifyToken,
+  authorize(["ADMIN"]),
+  adminCreateAdmin,
 );
 router.post("/edit", verifyToken, userEdit);
 

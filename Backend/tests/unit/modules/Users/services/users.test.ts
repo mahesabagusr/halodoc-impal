@@ -126,6 +126,38 @@ describe("UserService", () => {
     });
   });
 
+  it("registerAdmin should create admin account", async () => {
+    const bcryptMock = bcrypt as any;
+
+    usersRepoMock.findByEmail.mockResolvedValue(null);
+    bcryptMock.hash.mockResolvedValue("hashed-admin");
+    usersRepoMock.createUser.mockResolvedValue({
+      id: 4,
+      email: "new-admin@mail.com",
+      role: "ADMIN",
+    });
+
+    const result = await UserService.registerAdmin({
+      fullName: "New Admin",
+      email: "new-admin@mail.com",
+      password: "password123",
+    });
+
+    expect(usersRepoMock.createUser).toHaveBeenCalledWith({
+      fullName: "New Admin",
+      email: "new-admin@mail.com",
+      password: "hashed-admin",
+      role: "ADMIN",
+    });
+
+    expect(result.err).toBeNull();
+    expect(result.data).toEqual({
+      id: 4,
+      email: "new-admin@mail.com",
+      role: "ADMIN",
+    });
+  });
+
   it("login should return token when credentials valid", async () => {
     const bcryptMock = bcrypt as any;
 

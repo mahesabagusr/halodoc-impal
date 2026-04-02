@@ -76,6 +76,17 @@ export default class UserService {
     }
   }
 
+  static async registerAdmin(
+    payload: RegisterUserDto,
+  ): Promise<ResponseResult<RegisteredUser>> {
+    try {
+      return await UserService.createUserByRole(payload, "ADMIN");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return wrapper.error(new BadRequestError(message));
+    }
+  }
+
   static async login(payload: LoginUserDto): Promise<ResponseResult<JwtToken>> {
     try {
       const { password, email } = payload;
