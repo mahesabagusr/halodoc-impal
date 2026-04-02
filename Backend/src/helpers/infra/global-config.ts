@@ -5,8 +5,8 @@ dotenv.config({ path: ".env" });
 
 export const config: Config = {
   express: {
-    port: process.env.EXPRESS_PORT,
-    host: process.env.EXPRESS_HOST,
+    port: process.env.EXPRESS_PORT ?? process.env.PORT ?? "3000",
+    host: process.env.EXPRESS_HOST ?? "localhost",
   },
   db: {
     database: process.env.MYSQL_DEV,
