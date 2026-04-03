@@ -6,8 +6,7 @@ import { ERROR as httpError } from "@/helpers/http-status/statusCode";
 import { config } from "@/helpers/infra/global-config";
 import { TokenData, TokenResponse } from "@/interfaces/jwt-interface";
 
-const jwtSecret =
-  process.env.JWT_SECRET || config.key.privateKey || "dev-secret";
+const jwtSecret = config.key.jwtSecret || config.key.privateKey || "dev-secret";
 
 export const createToken = (data: TokenData): TokenResponse => {
   const accessToken: string = jwt.sign(
@@ -72,7 +71,7 @@ export const verifyToken = (
         email: payload.email,
         role: payload.role,
       };
-
+      console.log("Decoded Token Payload:", req.user);
       next();
     });
   } catch (err) {

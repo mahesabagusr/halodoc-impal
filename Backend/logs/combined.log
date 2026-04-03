@@ -22,3 +22,25 @@
 2026-04-03 01:04:30 [info]: Creating Account: new@mail.com
 2026-04-03 01:04:37 [info]: Creating Account: existing@mail.com
 2026-04-03 01:04:37 [info]: Creating Account: new@mail.com
+2026-04-03 01:45:13 [info]: Creating Account: patient@example.com
+2026-04-03 02:55:34 [info]: Creating Account: patient@example.com
+2026-04-03 02:55:43 [info]: Creating Account: doctor@example.com
+2026-04-03 02:56:07 [info]: Creating Account: admin@example.com
+2026-04-03 03:02:24 [info]: Creating Account: existing@mail.com
+2026-04-03 03:02:24 [info]: Creating Account: new@mail.com
+2026-04-03 03:02:24 [info]: Creating Account: doctor@mail.com
+2026-04-03 17:41:03 [info]: Creating Account: existing@mail.com
+2026-04-03 17:41:03 [info]: Creating Account: new@mail.com
+2026-04-03 17:41:03 [info]: Creating Account: doctor@mail.com
+2026-04-03 17:41:03 [info]: Creating Account: new-admin@mail.com
+2026-04-03 19:58:28 [info]: Creating Account: admin@admin.com
+2026-04-03 19:59:24 [info]: Creating Account: admin@admin.com
+2026-04-03 19:59:28 [info]: Creating Account: admin2@admin.com
+2026-04-03 20:13:10 [info]: Creating Account: admin2@admin.com as ADMIN
+2026-04-03 20:13:18 [info]: Creating Account: doctor@example.com as DOCTOR
+2026-04-03 20:13:23 [info]: Creating Account: doctor2@example.com as DOCTOR
+2026-04-03 20:13:36 [info]: Creating Account: doctor2@example.com as DOCTOR
+2026-04-03 20:29:49 [info]: Creating Account: doctor2@example.com as DOCTOR
+2026-04-03 21:00:57 [info]: Creating Account: john@example.com as PATIENT
+2026-04-03 21:03:24 [info]: Creating Account: doctor@example.com as PATIENT
+2026-04-03 21:03:35 [info]: Creating Account: admin@example.com as PATIENT

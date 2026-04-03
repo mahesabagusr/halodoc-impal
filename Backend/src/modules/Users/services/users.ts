@@ -12,15 +12,19 @@ import {
 } from "@/interfaces/users-interface";
 import { createToken } from "@/middlewares/jwt";
 import UsersRepository from "@/modules/Users/repositories/users";
+import { Role } from "@prisma/client";
 
 export default class UserService {
-  static async register(
+  static async createUserByRole(
     payload: RegisterUserDto,
+    role: Role = "PATIENT",
   ): Promise<ResponseResult<RegisteredUser>> {
     try {
+
+
       const { fullName, email, password } = payload;
 
-      logger.info(`Creating Account: ${email}`);
+      logger.info(`Creating Account: ${email} as ${role}`);
 
       const existingUser = await UsersRepository.findByEmail(email);
 
@@ -34,7 +38,7 @@ export default class UserService {
         fullName,
         email,
         password: hashPassword,
-        role: "PATIENT",
+        role,
       });
 
       if (!createUser) {

@@ -1,83 +1,46 @@
 {
   "info": {
-    "name": "IMPAL Backend API",
-    "_postman_id": "8ee60906-4dda-4b17-9558-438ddd31d5f9",
-    "description": "Collection for all current IMPAL backend APIs.",
+    "name": "MediConnect API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
-      "key": "baseUrl",
-      "value": "http://localhost:3000"
+      "key": "base_url",
+      "value": "http://localhost:3000/api/v1",
+      "type": "string"
     },
     {
-      "key": "patientEmail",
-      "value": "patient@example.com"
-    },
-    {
-      "key": "patientPassword",
-      "value": "password123"
-    },
-    {
-      "key": "adminToken",
-      "value": ""
-    },
-    {
-      "key": "patientToken",
-      "value": ""
-    },
-    {
-      "key": "cartItemId",
-      "value": "1"
-    },
-    {
-      "key": "productId",
-      "value": "1"
+      "key": "token",
+      "value": "",
+      "type": "string"
     }
   ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
   "item": [
-    {
-      "name": "Server",
-      "item": [
-        {
-          "name": "Root Health",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/",
-              "host": ["{{baseUrl}}"],
-              "path": [""]
-            },
-            "description": "Basic server status endpoint."
-          }
-        }
-      ]
-    },
     {
       "name": "Users",
       "item": [
         {
-          "name": "Users Health",
+          "name": "Health Check",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "health"]
-            }
+            "url": "{{base_url}}/users/health"
           }
         },
         {
-          "name": "Register User",
+          "name": "Register Patient",
           "request": {
             "method": "POST",
+            "url": "{{base_url}}/users/register",
             "header": [
               {
                 "key": "Content-Type",
@@ -86,35 +49,15 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Test Patient\",\n  \"email\": \"{{patientEmail}}\",\n  \"password\": \"{{patientPassword}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "register"]
+              "raw": "{\n  \"fullName\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
             }
           }
         },
         {
-          "name": "Login User",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const json = pm.response.json();",
-                  "const token = json?.data?.token;",
-                  "if (token) {",
-                  "  pm.collectionVariables.set('patientToken', token);",
-                  "  pm.collectionVariables.set('accessToken', token);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Login",
           "request": {
             "method": "POST",
+            "url": "{{base_url}}/users/login",
             "header": [
               {
                 "key": "Content-Type",
@@ -123,57 +66,66 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{patientEmail}}\",\n  \"password\": \"{{patientPassword}}\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "login"]
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
             }
           }
         },
         {
-          "name": "Edit User (Not Implemented)",
+          "name": "Create Doctor (Admin)",
           "request": {
             "method": "POST",
+            "url": "{{base_url}}/users/admin/doctors",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{patientToken}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Updated Name\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users/edit",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users", "edit"]
-            },
-            "description": "Currently returns feature not implemented."
+              "raw": "{\n  \"fullName\": \"Dr. Smith\",\n  \"email\": \"doctor@example.com\",\n  \"password\": \"password123\"\n}"
+            }
           }
         },
         {
-          "name": "Get All Users (Admin)",
+          "name": "Create Admin (Admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/users/admin/admins",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Admin User\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Edit User Profile",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/users/edit",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"John Doe Edited\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get All Users",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{adminToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/users",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "users"]
-            },
-            "description": "Requires ADMIN role token. Set adminToken manually."
+            "url": "{{base_url}}/users"
           }
         }
       ]
@@ -185,64 +137,40 @@
           "name": "Get My Cart",
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{patientToken}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/pharmacy/cart",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "pharmacy", "cart"]
-            }
+            "url": "{{base_url}}/pharmacy/cart"
           }
         },
         {
-          "name": "Add Item To Cart",
+          "name": "Add Item to Cart",
           "request": {
             "method": "POST",
+            "url": "{{base_url}}/pharmacy/cart/items",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{patientToken}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 1\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/pharmacy/cart/items",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "pharmacy", "cart", "items"]
+              "raw": "{\n  \"productId\": 1,\n  \"quantity\": 2\n}"
             }
           }
         },
         {
-          "name": "Remove Cart Item",
+          "name": "Remove Item from Cart",
           "request": {
             "method": "DELETE",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{patientToken}}"
-              }
-            ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/pharmacy/cart/items/{{cartItemId}}",
-              "host": ["{{baseUrl}}"],
+              "raw": "{{base_url}}/pharmacy/cart/items/1",
+              "host": [
+                "{{base_url}}"
+              ],
               "path": [
-                "api",
-                "v1",
                 "pharmacy",
                 "cart",
                 "items",
-                "{{cartItemId}}"
+                "1"
               ]
             }
           }
@@ -251,24 +179,16 @@
           "name": "Checkout Cart",
           "request": {
             "method": "POST",
+            "url": "{{base_url}}/pharmacy/cart/checkout",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{patientToken}}"
               }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"shippingAddress\": \"Jl. Contoh No. 123, Jakarta\"\n}"
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/pharmacy/cart/checkout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "pharmacy", "cart", "checkout"]
+              "raw": "{\n  \"shippingAddress\": \"123 Main Street, City Name\"\n}"
             }
           }
         }

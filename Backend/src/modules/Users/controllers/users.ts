@@ -29,7 +29,7 @@ export const userRegister = async (
       );
     }
 
-    const result = await UserService.register(payload);
+    const result = await UserService.createUserByRole(payload, payload.role);
 
     if (result.err) {
       return wrapper.response(
