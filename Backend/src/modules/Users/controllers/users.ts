@@ -16,7 +16,6 @@ export const userRegister = async (
 ): Promise<void> => {
   try {
     const payload: RegisterUserDto = { ...req.body };
-    const userRole: string | undefined = req.user?.role;
 
     const validatePayload = await isValidPayload(payload, RegisterUserSchema);
 
@@ -27,16 +26,6 @@ export const userRegister = async (
         { err: validatePayload.err, data: null },
         "Invalid Payload",
         httpError.BAD_REQUEST,
-      );
-    }
-
-    if (userRole !== "ADMIN" && payload.role && payload.role !== "PATIENT") {
-      return wrapper.response(
-        res,
-        "fail",
-        { err: new Error("Unauthorized Role Assignment"), data: null },
-        "Unauthorized Role Assignment",
-        httpError.UNAUTHORIZED,
       );
     }
 
@@ -121,116 +110,6 @@ export const userLogin = async (req: Request, res: Response): Promise<void> => {
       "fail",
       { err: error, data: null },
       "Login Failed",
-      httpError.INTERNAL_ERROR,
-    );
-  }
-};
-
-export const adminCreateDoctor = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  try {
-    const payload: RegisterUserDto = { ...req.body };
-
-    const validatePayload = await isValidPayload(payload, RegisterUserSchema);
-
-    if (validatePayload.err) {
-      return wrapper.response(
-        res,
-        "fail",
-        { err: validatePayload.err, data: null },
-        "Invalid Payload",
-        httpError.BAD_REQUEST,
-      );
-    }
-
-    const result = await UserService.createUserByRole(payload, "DOCTOR");
-
-    if (result.err) {
-      return wrapper.response(
-        res,
-        "fail",
-        result,
-        "Doctor Registration Failed",
-        httpError.BAD_REQUEST,
-      );
-    }
-
-    return wrapper.response(
-      res,
-      "success",
-      result,
-      "Doctor Registration Successful",
-      http.CREATED,
-    );
-  } catch (err: unknown) {
-    const errorMessage =
-      err instanceof Error ? err.message : "An unexpected error occurred";
-    const error = err instanceof Error ? err : new Error(errorMessage);
-    logger.error(
-      `Unexpected error during doctor registration: ${errorMessage}`,
-    );
-
-    return wrapper.response(
-      res,
-      "fail",
-      { err: error, data: null },
-      "Doctor Registration Failed",
-      httpError.INTERNAL_ERROR,
-    );
-  }
-};
-
-export const adminCreateAdmin = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  try {
-    const payload: RegisterUserDto = { ...req.body };
-
-    const validatePayload = await isValidPayload(payload, RegisterUserSchema);
-
-    if (validatePayload.err) {
-      return wrapper.response(
-        res,
-        "fail",
-        { err: validatePayload.err, data: null },
-        "Invalid Payload",
-        httpError.BAD_REQUEST,
-      );
-    }
-
-    const result = await UserService.createUserByRole(payload, "ADMIN");
-
-    if (result.err) {
-      return wrapper.response(
-        res,
-        "fail",
-        result,
-        "Admin Registration Failed",
-        httpError.BAD_REQUEST,
-      );
-    }
-
-    return wrapper.response(
-      res,
-      "success",
-      result,
-      "Admin Registration Successful",
-      http.CREATED,
-    );
-  } catch (err: unknown) {
-    const errorMessage =
-      err instanceof Error ? err.message : "An unexpected error occurred";
-    const error = err instanceof Error ? err : new Error(errorMessage);
-    logger.error(`Unexpected error during admin registration: ${errorMessage}`);
-
-    return wrapper.response(
-      res,
-      "fail",
-      { err: error, data: null },
-      "Admin Registration Failed",
       httpError.INTERNAL_ERROR,
     );
   }

@@ -1,7 +1,5 @@
 import { Request, Response, Router } from "express";
 import {
-  adminCreateAdmin,
-  adminCreateDoctor,
   getAllUsers,
   userEdit,
   userLogin,
@@ -106,12 +104,7 @@ router.post("/login", userLogin);
  *       "500":
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post(
-  "/admin/doctors",
-  verifyToken,
-  authorize(["ADMIN"]),
-  userRegister,
-);
+router.post("/admin/doctors", verifyToken, authorize(["ADMIN"]), userRegister);
 
 /**
  * @swagger
@@ -141,7 +134,7 @@ router.post(
  *       "500":
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post("/admin/admins",authorize(["ADMIN"]), verifyToken, userRegister);
+router.post("/admin/admins", verifyToken, authorize(["ADMIN"]), userRegister);
 
 /**
  * @swagger

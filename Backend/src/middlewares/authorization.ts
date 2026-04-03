@@ -5,6 +5,7 @@ import { ForbiddenError } from "@/helpers/error";
 export const authorize = (roles: Array<"PATIENT" | "DOCTOR" | "ADMIN">) => {
   return (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;
+    console.log(user?.role || "No role found in request.user");
     if (!user || !roles.includes(user.role)) {
       return wrapper.response(
         res,
