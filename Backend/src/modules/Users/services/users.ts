@@ -36,7 +36,12 @@ export default class UserService {
         fullName,
         email,
         password: hashPassword,
-        role,
+        role: role as Role,
+        dob: payload.dob,
+        gender: payload.gender,
+        specialization: payload.specialization,
+        strNumber: payload.strNumber,
+        department: payload.department,
       });
 
       if (!createUser) {

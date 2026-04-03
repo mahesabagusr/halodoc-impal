@@ -5,6 +5,11 @@ export const RegisterUserSchema = z.object({
   email: z.string().email("email tidak valid"),
   password: z.string().min(8, "Password minimal 8 Karakter"),
   role: z.enum(["PATIENT", "DOCTOR", "ADMIN"]).optional(),
+  dob: z.string().datetime().optional(), // ISO string
+  gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
+  specialization: z.string().optional(),
+  strNumber: z.string().optional(),
+  department: z.string().optional(),
 });
 
 export const LoginUserSchema = z.object({
@@ -14,4 +19,9 @@ export const LoginUserSchema = z.object({
 
 export const EditUserSchema = z.object({
   fullName: z.string().min(3, "Nama Lengkap minimal 3 Karakter").optional(),
+  dob: z.string().datetime().optional(),
+  gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
+  specialization: z.string().optional(),
+  strNumber: z.string().optional(),
+  department: z.string().optional(),
 });

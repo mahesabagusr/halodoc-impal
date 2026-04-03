@@ -16,6 +16,11 @@ export default class UsersRepository {
     email: string;
     password: string;
     role: Role;
+    dob?: string | Date;
+    gender?: "MALE" | "FEMALE" | "OTHER";
+    specialization?: string;
+    strNumber?: string;
+    department?: string;
   }): Promise<RegisteredUser> {
     return prisma.user.create({
       data: {
@@ -23,6 +28,31 @@ export default class UsersRepository {
         email: payload.email,
         password: payload.password,
         role: payload.role,
+        ...(payload.role === "PATIENT" && {
+          patientProfile: {
+            create: {
+              dob: payload.dob ? new Date(payload.dob) : undefined,
+              gender: payload.gender,
+            },
+          },
+        }),
+        ...(payload.role === "ADMIN" && {
+          adminProfile: {
+            create: {
+              department: payload.department,
+            },
+          },
+        }),
+        ...(payload.role === "DOCTOR" &&
+          payload.specialization &&
+          payload.strNumber && {
+            doctorProfile: {
+              create: {
+                specialization: payload.specialization,
+                strNumber: payload.strNumber,
+              },
+            },
+          }),
       },
       select: {
         id: true,
@@ -40,6 +70,9 @@ export default class UsersRepository {
         email: true,
         role: true,
         createdAt: true,
+        patientProfile: true,
+        doctorProfile: true,
+        adminProfile: true,
       },
       orderBy: { createdAt: "desc" },
     });
