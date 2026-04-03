@@ -12,7 +12,7 @@ import {
 } from "@/interfaces/users-interface";
 import { createToken } from "@/middlewares/jwt";
 import UsersRepository from "@/modules/Users/repositories/users";
-import { Role } from "@prisma/client";
+import { Role } from "@/generated/prisma";
 
 export default class UserService {
   static async createUserByRole(
@@ -20,8 +20,6 @@ export default class UserService {
     role: Role = "PATIENT",
   ): Promise<ResponseResult<RegisteredUser>> {
     try {
-
-
       const { fullName, email, password } = payload;
 
       logger.info(`Creating Account: ${email} as ${role}`);

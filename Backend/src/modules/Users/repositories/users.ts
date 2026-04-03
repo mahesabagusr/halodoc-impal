@@ -1,5 +1,5 @@
 import prisma from "@/helpers/db/prisma/client";
-import { Role } from "@prisma/client";
+import { Role } from "@/generated/prisma";
 import { RegisteredUser, UserListItem } from "@/interfaces/users-interface";
 
 export default class UsersRepository {

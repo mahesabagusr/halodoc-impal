@@ -3,124 +3,16 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id                  Int            @id @default(autoincrement())
-  email               String         @unique
-  password            String
-  fullName            String
-  role                Role           @default(PATIENT)
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-  doctorProfile       DoctorProfile?
-  orders              Order[]
-  consultations       Consultation[] @relation("PatientConsultations")
-  doctorConsultations Consultation[] @relation("DoctorConsultations")
-  ratings             Rating[]
-  cart                Cart?
-}
-
-model DoctorProfile {
-  id             Int      @id @default(autoincrement())
-  user           User     @relation(fields: [userId], references: [id])
-  userId         Int      @unique
-  specialization String
-  strNumber      String   @unique
-  photoUrl       String?
-  isVerified     Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-}
-
-model Product {
-  id          Int         @id @default(autoincrement())
-  name        String
-  description String?
-  price       Float
-  stock       Int
-  imageUrl    String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  orderItems  OrderItem[]
-  ratings     Rating[]
-  cartItems   CartItem[]
-}
-
-model Cart {
-  id        Int        @id @default(autoincrement())
-  user      User       @relation(fields: [userId], references: [id])
-  userId    Int        @unique
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  items     CartItem[]
-}
-
-model CartItem {
-  id        Int      @id @default(autoincrement())
-  cart      Cart     @relation(fields: [cartId], references: [id])
-  cartId    Int
-  product   Product  @relation(fields: [productId], references: [id])
-  productId Int
-  quantity  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([cartId, productId])
-}
-
-model Order {
-  id              Int         @id @default(autoincrement())
-  user            User        @relation(fields: [userId], references: [id])
-  userId          Int
-  totalAmount     Float
-  status          OrderStatus @default(PENDING)
-  shippingAddress String
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  items           OrderItem[]
-}
-
-model OrderItem {
-  id        Int     @id @default(autoincrement())
-  order     Order   @relation(fields: [orderId], references: [id])
-  orderId   Int
-  product   Product @relation(fields: [productId], references: [id])
-  productId Int
-  quantity  Int
-  price     Float
-}
-
-model Consultation {
-  id        Int                @id @default(autoincrement())
-  patient   User               @relation("PatientConsultations", fields: [patientId], references: [id])
-  patientId Int
-  doctor    User               @relation("DoctorConsultations", fields: [doctorId], references: [id])
-  doctorId  Int
-  startTime DateTime?
-  endTime   DateTime?
-  status    ConsultationStatus @default(REQUESTED)
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-}
-
-model Rating {
-  id        Int        @id @default(autoincrement())
-  user      User       @relation(fields: [userId], references: [id])
-  userId    Int
-  rating    Int
-  review    String?
-  type      RatingType
-  targetId  Int // ID of Product or Doctor (User)
-  product   Product?   @relation(fields: [productId], references: [id])
-  productId Int?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-}
+// ==========================================
+// ENUMS
+// ==========================================
 
 enum Role {
   PATIENT
@@ -143,7 +35,286 @@ enum ConsultationStatus {
   CANCELLED
 }
 
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
 enum RatingType {
   PRODUCT
   DOCTOR
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+// ==========================================
+// USER & PROFILES
+// ==========================================
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  fullName  String
+  role      Role     @default(PATIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Profiles
+  doctorProfile  DoctorProfile?
+  patientProfile PatientProfile?
+  adminProfile   AdminProfile?
+
+  // Relations
+  orders              Order[]
+  consultations       Consultation[] @relation("PatientConsultations")
+  doctorConsultations Consultation[] @relation("DoctorConsultations")
+  sentMessages        Message[]      @relation("UserMessages")
+  ratings             Rating[]
+  cart                Cart?
+}
+
+model AdminProfile {
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int  @unique
+
+  // Admin-specific fields
+  department   String? // e.g., "Operations", "Customer Support", "IT"
+  isSuperAdmin Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PatientProfile {
+  id     Int       @id @default(autoincrement())
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int       @unique
+  dob    DateTime?
+  gender Gender?
+
+  addresses Address[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Address {
+  id               Int            @id @default(autoincrement())
+  patientProfile   PatientProfile @relation(fields: [patientProfileId], references: [id], onDelete: Cascade)
+  patientProfileId Int
+  label            String? // e.g., "Home", "Office"
+  streetAddress    String
+  city             String
+  postalCode       String
+  isDefault        Boolean        @default(false)
+
+  @@index([patientProfileId])
+}
+
+model DoctorProfile {
+  id             Int      @id @default(autoincrement())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         Int      @unique
+  specialization String
+  strNumber      String   @unique
+  photoUrl       String?
+  isVerified     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([specialization])
+}
+
+// ==========================================
+// PHARMACY & PRODUCTS
+// ==========================================
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  products    Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId  Int
+  name        String
+  description String?  @db.Text
+  price       Float
+  stock       Int
+  imageUrl    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  orderItems        OrderItem[]
+  ratings           Rating[]
+  cartItems         CartItem[]
+  prescriptionItems PrescriptionItem[]
+
+  @@index([categoryId])
+}
+
+// ==========================================
+// CONSULTATION, CHAT & PRESCRIPTIONS
+// ==========================================
+
+model Consultation {
+  id        Int  @id @default(autoincrement())
+  patient   User @relation("PatientConsultations", fields: [patientId], references: [id])
+  patientId Int
+  doctor    User @relation("DoctorConsultations", fields: [doctorId], references: [id])
+  doctorId  Int
+
+  startTime DateTime?
+  endTime   DateTime?
+  status    ConsultationStatus @default(REQUESTED)
+
+  // Pricing & Payment
+  fee           Float         @default(0.0)
+  paymentStatus PaymentStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  messages     Message[]
+  prescription Prescription?
+
+  @@index([patientId])
+  @@index([doctorId])
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  consultationId Int
+  sender         User         @relation("UserMessages", fields: [senderId], references: [id])
+  senderId       Int
+  content        String       @db.Text
+  timestamp      DateTime     @default(now())
+
+  @@index([consultationId])
+  @@index([senderId])
+}
+
+model Prescription {
+  id             Int          @id @default(autoincrement())
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  consultationId Int          @unique
+  notes          String?      @db.Text
+
+  items PrescriptionItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PrescriptionItem {
+  id             Int          @id @default(autoincrement())
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  prescriptionId Int
+  product        Product      @relation(fields: [productId], references: [id])
+  productId      Int
+  dosage         String // e.g., "2x a day after meals"
+  quantity       Int
+
+  @@index([prescriptionId])
+  @@index([productId])
+}
+
+// ==========================================
+// E-COMMERCE (CART & ORDERS)
+// ==========================================
+
+model Cart {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int      @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items CartItem[]
+}
+
+model CartItem {
+  id        Int     @id @default(autoincrement())
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  cartId    Int
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId])
+  @@index([productId])
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  user            User        @relation(fields: [userId], references: [id])
+  userId          Int
+  totalAmount     Float
+  status          OrderStatus @default(PENDING)
+  shippingAddress String      @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items OrderItem[]
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   Int
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
+  quantity  Int
+  price     Float // Storing price at purchase time for historical accuracy
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// ==========================================
+// REVIEWS / RATINGS
+// ==========================================
+
+model Rating {
+  id       Int        @id @default(autoincrement())
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   Int
+  rating   Int
+  review   String?    @db.Text
+  type     RatingType
+  targetId Int // ID of Product or Doctor Profile
+
+  // Optional relation if it's a product rating
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([targetId])
+  @@index([productId])
 }
