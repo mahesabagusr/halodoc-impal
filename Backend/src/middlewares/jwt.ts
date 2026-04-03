@@ -71,7 +71,7 @@ export const verifyToken = (
         email: payload.email,
         role: payload.role,
       };
-
+      console.log("Decoded Token Payload:", req.user);
       next();
     });
   } catch (err) {

@@ -16,6 +16,7 @@ export const userRegister = async (
 ): Promise<void> => {
   try {
     const payload: RegisterUserDto = { ...req.body };
+    const userRole: string | undefined = req.user?.role;
 
     const validatePayload = await isValidPayload(payload, RegisterUserSchema);
 
@@ -29,7 +30,17 @@ export const userRegister = async (
       );
     }
 
-    const result = await UserService.register(payload);
+    if (userRole !== "ADMIN" && payload.role && payload.role !== "PATIENT") {
+      return wrapper.response(
+        res,
+        "fail",
+        { err: new Error("Unauthorized Role Assignment"), data: null },
+        "Unauthorized Role Assignment",
+        httpError.UNAUTHORIZED,
+      );
+    }
+
+    const result = await UserService.createUserByRole(payload, payload.role);
 
     if (result.err) {
       return wrapper.response(
@@ -134,7 +145,7 @@ export const adminCreateDoctor = async (
       );
     }
 
-    const result = await UserService.registerDoctor(payload);
+    const result = await UserService.createUserByRole(payload, "DOCTOR");
 
     if (result.err) {
       return wrapper.response(
@@ -190,7 +201,7 @@ export const adminCreateAdmin = async (
       );
     }
 
-    const result = await UserService.registerAdmin(payload);
+    const result = await UserService.createUserByRole(payload, "ADMIN");
 
     if (result.err) {
       return wrapper.response(

@@ -28,18 +28,17 @@
     /* Modules */
     "module": "commonjs" /* Specify what module code is generated. */,
     "rootDir": "./src" /* Specify the root folder within your source files. */,
+    "ignoreDeprecations": "6.0" /* Suppress reporting of deprecated APIs. */,
     "moduleResolution": "node" /* Specify how TypeScript looks up a file from a given module specifier. */,
-    "ignoreDeprecations": "6.0" /* Silence deprecation diagnostics scheduled for TS 7.0 while keeping current path mapping setup. */,
-    "baseUrl": "./src" /* Specify the base directory to resolve non-relative module names. */,
     "paths": {
-      "@/*": ["./*"],
-      "@/modules/*": ["modules/*"],
-      "@/helpers/*": ["helpers/*"],
-      "@/interfaces/*": ["interfaces/*"],
-      "@/middlewares/*": ["middlewares/*"],
-      "@/schemas/*": ["schemas/*"],
-      "@/dtos/*": ["dtos/*"],
-      "@/routes/*": ["routes/*"]
+      "@/*": ["./src/*"],
+      "@/modules/*": ["./src/modules/*"],
+      "@/helpers/*": ["./src/helpers/*"],
+      "@/interfaces/*": ["./src/interfaces/*"],
+      "@/middlewares/*": ["./src/middlewares/*"],
+      "@/schemas/*": ["./src/schemas/*"],
+      "@/dtos/*": ["./src/dtos/*"],
+      "@/routes/*": ["./src/routes/*"]
     } /* Specify a set of entries that re-map imports to additional lookup locations. */,
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */

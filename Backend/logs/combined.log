@@ -29,3 +29,14 @@
 2026-04-03 03:02:24 [info]: Creating Account: existing@mail.com
 2026-04-03 03:02:24 [info]: Creating Account: new@mail.com
 2026-04-03 03:02:24 [info]: Creating Account: doctor@mail.com
+2026-04-03 17:41:03 [info]: Creating Account: existing@mail.com
+2026-04-03 17:41:03 [info]: Creating Account: new@mail.com
+2026-04-03 17:41:03 [info]: Creating Account: doctor@mail.com
+2026-04-03 17:41:03 [info]: Creating Account: new-admin@mail.com
+2026-04-03 19:58:28 [info]: Creating Account: admin@admin.com
+2026-04-03 19:59:24 [info]: Creating Account: admin@admin.com
+2026-04-03 19:59:28 [info]: Creating Account: admin2@admin.com
+2026-04-03 20:13:10 [info]: Creating Account: admin2@admin.com as ADMIN
+2026-04-03 20:13:18 [info]: Creating Account: doctor@example.com as DOCTOR
+2026-04-03 20:13:23 [info]: Creating Account: doctor2@example.com as DOCTOR
+2026-04-03 20:13:36 [info]: Creating Account: doctor2@example.com as DOCTOR
