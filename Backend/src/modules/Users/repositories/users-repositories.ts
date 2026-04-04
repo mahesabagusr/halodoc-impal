@@ -18,9 +18,8 @@ export default class UsersRepository {
     role: Role;
     dob?: string | Date;
     gender?: "MALE" | "FEMALE" | "OTHER";
-    specialization?: string;
+    specializationId?: number;
     strNumber?: string;
-    department?: string;
   }): Promise<RegisteredUser> {
     return prisma.user.create({
       data: {
@@ -38,17 +37,17 @@ export default class UsersRepository {
         }),
         ...(payload.role === "ADMIN" && {
           adminProfile: {
-            create: {
-              department: payload.department,
-            },
+            create: {},
           },
         }),
         ...(payload.role === "DOCTOR" &&
-          payload.specialization &&
+          payload.specializationId &&
           payload.strNumber && {
             doctorProfile: {
               create: {
-                specialization: payload.specialization,
+                specialization: {
+                  connect: { id: payload.specializationId },
+                },
                 strNumber: payload.strNumber,
               },
             },

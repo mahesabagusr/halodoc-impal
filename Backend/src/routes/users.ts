@@ -5,7 +5,7 @@ import {
   userLogin,
   userRegister,
   refreshToken,
-} from "@/modules/Users/controllers/users";
+} from "@/modules/Users/controllers/users-controllers";
 import { verifyToken } from "@/middlewares/jwt";
 import { authorize } from "@/middlewares/authorization";
 

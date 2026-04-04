@@ -11,7 +11,7 @@ import {
   UserListItem,
 } from "@/interfaces/users-interface";
 import { createToken, verifyRefreshToken } from "@/middlewares/jwt";
-import UsersRepository from "@/modules/Users/repositories/users";
+import UsersRepository from "@/modules/Users/repositories/users-repositories";
 import { Role } from "@/generated/prisma";
 
 export default class UserService {
@@ -39,9 +39,8 @@ export default class UserService {
         role: role as Role,
         dob: payload.dob,
         gender: payload.gender,
-        specialization: payload.specialization,
+        specializationId: payload.specializationId,
         strNumber: payload.strNumber,
-        department: payload.department,
       });
 
       if (!createUser) {

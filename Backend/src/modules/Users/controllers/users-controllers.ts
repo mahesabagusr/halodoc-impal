@@ -11,7 +11,7 @@ import {
   RegisterUserSchema,
   RefreshTokenSchema,
 } from "@/schemas/user-schema";
-import UserService from "@/modules/Users/services/users";
+import UserService from "@/modules/Users/services/users-services";
 import {
   RegisterUserDto,
   LoginUserDto,

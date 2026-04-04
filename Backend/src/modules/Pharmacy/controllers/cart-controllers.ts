@@ -10,7 +10,7 @@ import {
   CheckoutSchema,
   RemoveCartItemSchema,
 } from "@/schemas/cart-schema";
-import CartService from "@/modules/Pharmacy/services/cart";
+import CartService from "@/modules/Pharmacy/services/cart-services";
 import {
   AddCartItemDto,
   CheckoutDto,

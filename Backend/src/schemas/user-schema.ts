@@ -6,9 +6,8 @@ export const RegisterUserSchema = z.object({
   password: z.string().min(8, "Password minimal 8 Karakter"),
   dob: z.string().datetime().optional(),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
-  specialization: z.string().optional(),
+  specializationId: z.number().int().positive().optional(),
   strNumber: z.string().optional(),
-  department: z.string().optional(),
 });
 
 export const LoginUserSchema = z.object({
@@ -20,9 +19,8 @@ export const EditUserSchema = z.object({
   fullName: z.string().min(3, "Nama Lengkap minimal 3 Karakter").optional(),
   dob: z.string().datetime().optional(),
   gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
-  specialization: z.string().optional(),
+  specializationId: z.number().int().positive().optional(),
   strNumber: z.string().optional(),
-  department: z.string().optional(),
 });
 
 export const RefreshTokenSchema = z.object({
