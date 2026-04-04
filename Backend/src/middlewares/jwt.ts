@@ -7,6 +7,9 @@ import { config } from "@/helpers/infra/global-config";
 import { TokenData, TokenResponse } from "@/interfaces/jwt-interface";
 
 const jwtSecret = config.key.jwtSecret || config.key.privateKey || "dev-secret";
+const jwtRefreshSecret = config.key.jwtSecret
+  ? config.key.jwtSecret + "-refresh"
+  : "dev-refresh-secret";
 
 export const createToken = (data: TokenData): TokenResponse => {
   const accessToken: string = jwt.sign(
@@ -16,10 +19,24 @@ export const createToken = (data: TokenData): TokenResponse => {
       role: data.role,
     },
     jwtSecret,
-    { expiresIn: "1d" },
+    { expiresIn: "15m" }, // short-lived access token
   );
 
-  return { accessToken };
+  const refreshToken: string = jwt.sign(
+    {
+      userId: data.userId,
+      email: data.email,
+      role: data.role,
+    },
+    jwtRefreshSecret,
+    { expiresIn: "7d" }, // long-lived refresh token
+  );
+
+  return { accessToken, refreshToken };
+};
+
+export const verifyRefreshToken = (token: string): any => {
+  return jwt.verify(token, jwtRefreshSecret);
 };
 
 export const decodeToken = (token: string): JwtPayload | string => {

@@ -4,7 +4,8 @@ import {
   userEdit,
   userLogin,
   userRegister,
-} from "@/modules/Users/controllers/users";
+  refreshToken,
+} from "@/modules/Users/controllers/users-controllers";
 import { verifyToken } from "@/middlewares/jwt";
 import { authorize } from "@/middlewares/authorization";
 
@@ -48,7 +49,7 @@ router.get("/health", (req: Request, res: Response) => {
  *       "500":
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post("/register", userRegister);
+router.post("/register", userRegister("PATIENT"));
 
 /**
  * @swagger
@@ -78,6 +79,35 @@ router.post("/login", userLogin);
 
 /**
  * @swagger
+ * /api/v1/users/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       "200":
+ *         description: Token refreshed successfully
+ *       "400":
+ *         $ref: '#/components/responses/ValidationError'
+ *       "401":
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       "500":
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post("/refresh", refreshToken);
+
+/**
+ * @swagger
  * /api/v1/users/admin/doctors:
  *   post:
  *     summary: Admin creates a doctor account
@@ -104,7 +134,12 @@ router.post("/login", userLogin);
  *       "500":
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post("/admin/doctors", verifyToken, authorize(["ADMIN"]), userRegister);
+router.post(
+  "/admin/doctors",
+  verifyToken,
+  authorize(["ADMIN"]),
+  userRegister("DOCTOR"),
+);
 
 /**
  * @swagger
@@ -134,7 +169,12 @@ router.post("/admin/doctors", verifyToken, authorize(["ADMIN"]), userRegister);
  *       "500":
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post("/admin/admins", verifyToken, authorize(["ADMIN"]), userRegister);
+router.post(
+  "/admin/admins",
+  verifyToken,
+  authorize(["ADMIN"]),
+  userRegister("ADMIN"),
+);
 
 /**
  * @swagger

@@ -1,5 +1,5 @@
 import prisma from "@/helpers/db/prisma/client";
-import { Role } from "@prisma/client";
+import { Role } from "@/generated/prisma";
 import { RegisteredUser, UserListItem } from "@/interfaces/users-interface";
 
 export default class UsersRepository {
@@ -16,6 +16,10 @@ export default class UsersRepository {
     email: string;
     password: string;
     role: Role;
+    dob?: string | Date;
+    gender?: "MALE" | "FEMALE" | "OTHER";
+    specializationId?: number;
+    strNumber?: string;
   }): Promise<RegisteredUser> {
     return prisma.user.create({
       data: {
@@ -23,6 +27,31 @@ export default class UsersRepository {
         email: payload.email,
         password: payload.password,
         role: payload.role,
+        ...(payload.role === "PATIENT" && {
+          patientProfile: {
+            create: {
+              dob: payload.dob ? new Date(payload.dob) : undefined,
+              gender: payload.gender,
+            },
+          },
+        }),
+        ...(payload.role === "ADMIN" && {
+          adminProfile: {
+            create: {},
+          },
+        }),
+        ...(payload.role === "DOCTOR" &&
+          payload.specializationId &&
+          payload.strNumber && {
+            doctorProfile: {
+              create: {
+                specialization: {
+                  connect: { id: payload.specializationId },
+                },
+                strNumber: payload.strNumber,
+              },
+            },
+          }),
       },
       select: {
         id: true,
@@ -40,6 +69,9 @@ export default class UsersRepository {
         email: true,
         role: true,
         createdAt: true,
+        patientProfile: true,
+        doctorProfile: true,
+        adminProfile: true,
       },
       orderBy: { createdAt: "desc" },
     });

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import CartService from "@/modules/Pharmacy/services/cart";
+import CartService from "@/modules/Pharmacy/services/cart-services";
 
 const { cartRepoMock } = vi.hoisted(() => ({
   cartRepoMock: {

@@ -10,9 +10,9 @@ const options: any = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "MediConnect API Docs",
+      title: "Halodoc API Docs",
       version: "1.0.0",
-      description: "API Documentation for MediConnect Backend",
+      description: "API Documentation for Halodoc Backend",
     },
     servers: [
       {

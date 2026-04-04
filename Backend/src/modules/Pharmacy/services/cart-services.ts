@@ -1,6 +1,6 @@
 import * as wrapper from "@/helpers/utils/wrapper";
 import { BadRequestError, NotFoundError } from "@/helpers/error";
-import CartRepository from "@/modules/Pharmacy/repositories/cart";
+import CartRepository from "@/modules/Pharmacy/repositories/cart-repositories";
 import { AddCartItemDto, CheckoutDto } from "@/dtos/cart-dto";
 import { ResponseResult } from "@/interfaces/wrapper-interface";
 import {

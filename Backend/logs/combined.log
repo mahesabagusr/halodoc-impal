@@ -44,3 +44,8 @@
 2026-04-03 21:00:57 [info]: Creating Account: john@example.com as PATIENT
 2026-04-03 21:03:24 [info]: Creating Account: doctor@example.com as PATIENT
 2026-04-03 21:03:35 [info]: Creating Account: admin@example.com as PATIENT
+2026-04-04 00:45:06 [info]: Creating Account: jane@example.com as PATIENT
+2026-04-04 00:46:56 [info]: Creating Account: bob.admin@example.com as ADMIN
+2026-04-04 00:47:59 [info]: Creating Account: smith@example.com as DOCTOR
+2026-04-04 00:52:40 [info]: Creating Account: jane@example.com as DOCTOR
+2026-04-04 00:52:45 [info]: Creating Account: jane2@example.com as DOCTOR

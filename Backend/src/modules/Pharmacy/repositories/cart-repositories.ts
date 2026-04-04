@@ -1,5 +1,5 @@
 import prisma from "@/helpers/db/prisma/client";
-import { Cart, Prisma } from "@prisma/client";
+import { Cart, Prisma } from "@/generated/prisma";
 import { CheckoutDto } from "@/dtos/cart-dto";
 import { BadRequestError } from "@/helpers/error";
 import { OrderWithItems } from "@/interfaces/cart-interface";

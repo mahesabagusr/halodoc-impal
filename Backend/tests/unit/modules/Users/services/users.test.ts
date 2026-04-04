@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import bcrypt from "bcrypt";
 import * as jwtModule from "@/middlewares/jwt";
-import UserService from "@/modules/Users/services/users";
+import UserService from "@/modules/Users/services/users-services";
 
 const { usersRepoMock } = vi.hoisted(() => ({
   usersRepoMock: {

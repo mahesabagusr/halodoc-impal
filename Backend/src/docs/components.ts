@@ -21,11 +21,26 @@
  *           type: string
  *           minLength: 8
  *           example: "password123"
- *         role:
+ *         dob:
  *           type: string
- *           enum: [PATIENT, DOCTOR, ADMIN]
- *           example: "PATIENT"
- *           description: Optional role override (often handled globally/restricted by routes)
+ *           format: date-time
+ *           example: "1990-01-01T00:00:00.000Z"
+ *         gender:
+ *           type: string
+ *           enum: [MALE, FEMALE, OTHER]
+ *           example: "MALE"
+ *         specialization:
+ *           type: string
+ *           example: "Cardiologist"
+ *           description: For DOCTOR registration
+ *         strNumber:
+ *           type: string
+ *           example: "STR-123456789"
+ *           description: For DOCTOR registration
+ *         department:
+ *           type: string
+ *           example: "Operations"
+ *           description: For ADMIN registration
  *
  *     LoginUserRequest:
  *       type: object
@@ -49,6 +64,18 @@
  *           type: string
  *           minLength: 3
  *           example: "John Doe Edited"
+ *         dob:
+ *           type: string
+ *           format: date-time
+ *         gender:
+ *           type: string
+ *           enum: [MALE, FEMALE, OTHER]
+ *         specialization:
+ *           type: string
+ *         strNumber:
+ *           type: string
+ *         department:
+ *           type: string
  *
  *     AddCartItemRequest:
  *       type: object

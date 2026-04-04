@@ -6,7 +6,7 @@ import {
   checkoutCart,
   getMyCart,
   removeCartItem,
-} from "@/modules/Pharmacy/controllers/cart";
+} from "@/modules/Pharmacy/controllers/cart-controllers";
 
 const router = Router();
 

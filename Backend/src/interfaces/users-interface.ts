@@ -12,6 +12,7 @@ export interface ValidationResult<T> {
 
 export interface JwtToken {
   token: string;
+  refreshToken: string;
 }
 
 export interface AuthenticatedUser {
@@ -32,4 +33,7 @@ export interface UserListItem {
   email: string;
   role: "PATIENT" | "DOCTOR" | "ADMIN";
   createdAt: Date;
+  patientProfile?: any;
+  doctorProfile?: any;
+  adminProfile?: any;
 }
