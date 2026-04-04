@@ -6,9 +6,17 @@ import {
 import logger from "@/helpers/utils/winston";
 import { Request, Response } from "express";
 import { isValidPayload } from "@/helpers/utils/validator";
-import { LoginUserSchema, RegisterUserSchema } from "@/schemas/user-schema";
+import {
+  LoginUserSchema,
+  RegisterUserSchema,
+  RefreshTokenSchema,
+} from "@/schemas/user-schema";
 import UserService from "@/modules/Users/services/users";
-import { RegisterUserDto, LoginUserDto } from "@/dtos/user-dto";
+import {
+  RegisterUserDto,
+  LoginUserDto,
+  RefreshTokenDto,
+} from "@/dtos/user-dto";
 
 export const userRegister = async (
   req: Request,
@@ -169,6 +177,54 @@ export const getAllUsers = async (
       "fail",
       { err: error, data: null },
       "Fetch users failed",
+      httpError.INTERNAL_ERROR,
+    );
+  }
+};
+
+export const refreshToken = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const payload: RefreshTokenDto = { ...req.body };
+
+    const validatePayload = await isValidPayload(payload, RefreshTokenSchema);
+
+    if (validatePayload.err) {
+      return wrapper.response(
+        res,
+        "fail",
+        { err: validatePayload.err, data: null },
+        "Invalid Payload",
+        httpError.BAD_REQUEST,
+      );
+    }
+
+    const result = await UserService.refreshToken(payload);
+
+    if (result.err) {
+      return wrapper.response(
+        res,
+        "fail",
+        result,
+        "Refresh Token Failed",
+        httpError.UNAUTHORIZED,
+      );
+    }
+
+    return wrapper.response(res, "success", result, "Token Refreshed", http.OK);
+  } catch (err: unknown) {
+    const errorMessage =
+      err instanceof Error ? err.message : "An unexpected error occurred";
+    const error = err instanceof Error ? err : new Error(errorMessage);
+    logger.error(`Unexpected error during refresh token: ${errorMessage}`);
+
+    return wrapper.response(
+      res,
+      "fail",
+      { err: error, data: null },
+      "Refresh Token Failed",
       httpError.INTERNAL_ERROR,
     );
   }

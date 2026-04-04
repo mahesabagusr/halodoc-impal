@@ -10,7 +10,7 @@ import {
   RegisteredUser,
   UserListItem,
 } from "@/interfaces/users-interface";
-import { createToken } from "@/middlewares/jwt";
+import { createToken, verifyRefreshToken } from "@/middlewares/jwt";
 import UsersRepository from "@/modules/Users/repositories/users";
 import { Role } from "@/generated/prisma";
 
@@ -76,12 +76,12 @@ export default class UserService {
         return wrapper.error(new UnauthorizedError("Incorrect password"));
       }
 
-      const { accessToken } = await createToken({
+      const { accessToken, refreshToken } = await createToken({
         userId: user.id,
         email: user.email,
         role: user.role,
       });
-      return wrapper.data({ token: accessToken });
+      return wrapper.data({ token: accessToken, refreshToken });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return wrapper.error(new BadRequestError(message));
@@ -100,4 +100,39 @@ export default class UserService {
   }
 
   static async editUser() {}
+
+  static async refreshToken(payload: {
+    refreshToken: string;
+  }): Promise<ResponseResult<JwtToken>> {
+    try {
+      const { refreshToken } = payload;
+      const decoded: any = verifyRefreshToken(refreshToken);
+
+      if (!decoded || !decoded.userId) {
+        return wrapper.error(new UnauthorizedError("Invalid refresh token"));
+      }
+
+      const user = await UsersRepository.findByEmail(decoded.email);
+
+      if (!user) {
+        return wrapper.error(new NotFoundError("User not found"));
+      }
+
+      const { accessToken, refreshToken: newRefreshToken } = await createToken({
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      });
+
+      return wrapper.data({
+        token: accessToken,
+        refreshToken: newRefreshToken,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return wrapper.error(
+        new UnauthorizedError("Token refresh failed: " + message),
+      );
+    }
+  }
 }

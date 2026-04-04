@@ -4,6 +4,7 @@ import {
   userEdit,
   userLogin,
   userRegister,
+  refreshToken,
 } from "@/modules/Users/controllers/users";
 import { verifyToken } from "@/middlewares/jwt";
 import { authorize } from "@/middlewares/authorization";
@@ -75,6 +76,35 @@ router.post("/register", userRegister);
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.post("/login", userLogin);
+
+/**
+ * @swagger
+ * /api/v1/users/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       "200":
+ *         description: Token refreshed successfully
+ *       "400":
+ *         $ref: '#/components/responses/ValidationError'
+ *       "401":
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       "500":
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.post("/refresh", refreshToken);
 
 /**
  * @swagger

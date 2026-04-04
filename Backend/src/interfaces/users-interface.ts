@@ -12,6 +12,7 @@ export interface ValidationResult<T> {
 
 export interface JwtToken {
   token: string;
+  refreshToken: string;
 }
 
 export interface AuthenticatedUser {
