@@ -18,59 +18,60 @@ import {
   RefreshTokenDto,
 } from "@/dtos/user-dto";
 
-export const userRegister = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  try {
-    const payload: RegisterUserDto = { ...req.body };
+export const userRegister =
+  (roleToAssign: "PATIENT" | "DOCTOR" | "ADMIN" = "PATIENT") =>
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const payload: RegisterUserDto = { ...req.body };
 
-    const validatePayload = await isValidPayload(payload, RegisterUserSchema);
+      const validatePayload = await isValidPayload(payload, RegisterUserSchema);
 
-    if (validatePayload.err) {
+      if (validatePayload.err) {
+        return wrapper.response(
+          res,
+          "fail",
+          { err: validatePayload.err, data: null },
+          "Invalid Payload",
+          httpError.BAD_REQUEST,
+        );
+      }
+
+      const result = await UserService.createUserByRole(payload, roleToAssign);
+
+      if (result.err) {
+        return wrapper.response(
+          res,
+          "fail",
+          result,
+          "User Registration Failed",
+          httpError.BAD_REQUEST,
+        );
+      }
+
       return wrapper.response(
         res,
-        "fail",
-        { err: validatePayload.err, data: null },
-        "Invalid Payload",
-        httpError.BAD_REQUEST,
-      );
-    }
-
-    const result = await UserService.createUserByRole(payload, payload.role);
-
-    if (result.err) {
-      return wrapper.response(
-        res,
-        "fail",
+        "success",
         result,
-        "User Registration Failed",
-        httpError.BAD_REQUEST,
+        "User Registration Successful",
+        http.CREATED,
+      );
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : "An unexpected error occurred";
+      const error = err instanceof Error ? err : new Error(errorMessage);
+      logger.error(
+        `Unexpected error during user registration: ${errorMessage}`,
+      );
+
+      return wrapper.response(
+        res,
+        "fail",
+        { err: error, data: null },
+        "Registration Failed",
+        httpError.INTERNAL_ERROR,
       );
     }
-
-    return wrapper.response(
-      res,
-      "success",
-      result,
-      "User Registration Successful",
-      http.CREATED,
-    );
-  } catch (err: unknown) {
-    const errorMessage =
-      err instanceof Error ? err.message : "An unexpected error occurred";
-    const error = err instanceof Error ? err : new Error(errorMessage);
-    logger.error(`Unexpected error during user registration: ${errorMessage}`);
-
-    return wrapper.response(
-      res,
-      "fail",
-      { err: error, data: null },
-      "Registration Failed",
-      httpError.INTERNAL_ERROR,
-    );
-  }
-};
+  };
 
 export const userLogin = async (req: Request, res: Response): Promise<void> => {
   try {

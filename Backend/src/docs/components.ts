@@ -21,11 +21,6 @@
  *           type: string
  *           minLength: 8
  *           example: "password123"
- *         role:
- *           type: string
- *           enum: [PATIENT, DOCTOR, ADMIN]
- *           example: "PATIENT"
- *           description: Optional role override (often handled globally/restricted by routes)
  *         dob:
  *           type: string
  *           format: date-time

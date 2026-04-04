@@ -62,7 +62,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Jane Patient\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"PATIENT\",\n  \"dob\": \"1995-10-01T00:00:00.000Z\",\n  \"gender\": \"FEMALE\"\n}"
+              "raw": "{\n  \"fullName\": \"Jane Patient\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"password123\",\n  \"dob\": \"1995-10-01T00:00:00.000Z\",\n  \"gender\": \"FEMALE\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/register",
@@ -122,7 +122,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Dr. Smith\",\n  \"email\": \"smith@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"DOCTOR\",\n  \"specialization\": \"Cardiologist\",\n  \"strNumber\": \"STR-1234567\"\n}"
+              "raw": "{\n  \"fullName\": \"Dr. Smith\",\n  \"email\": \"smith@example.com\",\n  \"password\": \"password123\",\n  \"specialization\": \"Cardiologist\",\n  \"strNumber\": \"STR-1234567\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/admin/doctors",
@@ -155,7 +155,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fullName\": \"Bob Admin\",\n  \"email\": \"bob.admin@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"ADMIN\",\n  \"department\": \"IT Support\"\n}"
+              "raw": "{\n  \"fullName\": \"Bob Admin\",\n  \"email\": \"bob.admin@example.com\",\n  \"password\": \"password123\",\n  \"department\": \"IT Support\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/users/admin/admins",

@@ -49,7 +49,7 @@ router.get("/health", (req: Request, res: Response) => {
  *       "500":
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post("/register", userRegister);
+router.post("/register", userRegister("PATIENT"));
 
 /**
  * @swagger
@@ -134,7 +134,12 @@ router.post("/refresh", refreshToken);
  *       "500":
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post("/admin/doctors", verifyToken, authorize(["ADMIN"]), userRegister);
+router.post(
+  "/admin/doctors",
+  verifyToken,
+  authorize(["ADMIN"]),
+  userRegister("DOCTOR"),
+);
 
 /**
  * @swagger
@@ -164,7 +169,12 @@ router.post("/admin/doctors", verifyToken, authorize(["ADMIN"]), userRegister);
  *       "500":
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post("/admin/admins", verifyToken, authorize(["ADMIN"]), userRegister);
+router.post(
+  "/admin/admins",
+  verifyToken,
+  authorize(["ADMIN"]),
+  userRegister("ADMIN"),
+);
 
 /**
  * @swagger
