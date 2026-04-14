@@ -1,6 +1,6 @@
 import { navLinks } from '../data/mockData'
 
-function Navbar() {
+function Navbar({ onLoginClick }) {
   const activePage = 'Beranda'
 
   return (
@@ -33,7 +33,10 @@ function Navbar() {
           ))}
         </ul>
 
-        <button className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+        <button
+          onClick={onLoginClick}
+          className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+        >
           Masuk
         </button>
       </nav>
