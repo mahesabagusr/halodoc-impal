@@ -92,7 +92,7 @@ function AuthPage() {
     }
   };
 
-  const inputBaseClass = "w-full rounded-xl border bg-surface px-3 py-2.5 text-[14px] text-text-primary transition outline-none placeholder:text-[#9CA3AF]";
+  const inputBaseClass = "w-full rounded-xl border bg-surface px-3 py-2.5 text-[14px] text-text-primary transition outline-none placeholder:text-[#9CA3AF] [&::-ms-reveal]:hidden [&::-ms-clear]:hidden";
   const inputDefaultClass = `${inputBaseClass} border-border focus:border-primary focus:shadow-[0_0_0_3px_rgba(255,92,138,0.1)]`;
   const inputErrorClass = `${inputBaseClass} border-error focus:border-error`;
 
