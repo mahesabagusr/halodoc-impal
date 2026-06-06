@@ -1,194 +1,23 @@
-import { useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { useMyConsultations } from "../../../hooks/useConsultations";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSocket } from "../../../lib/socket";
-import {
-  Clock, MessageSquare, Check, X, Plus, Loader2,
-  AlertTriangle, Stethoscope, CreditCard, ClipboardList, ArrowRight,
-} from "lucide-react";
+import { Plus, RotateCcw, AlertTriangle, Stethoscope } from "lucide-react";
 
-/* ─── Helpers ────────────────────────────────────────────────────────── */
-function formatDate(ts) {
-  if (!ts) return "";
-  return new Date(ts).toLocaleDateString("id-ID", {
-    day: "numeric", month: "long", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
-  });
-}
+import FilterSidebar from "../components/FilterSidebar";
+import ConsultationCard from "../components/ConsultationCard";
+import { SORT_ORDER } from "../../../constants/consultationConfig";
 
-function formatCurrency(amount) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency", currency: "IDR", minimumFractionDigits: 0,
-  }).format(amount ?? 0);
-}
-
-/* ─── Status config ──────────────────────────────────────────────────── */
-const STATUS = {
-  REQUESTED: {
-    label: "Menunggu Dokter",
-    Icon: Clock,
-    bg: "bg-warning-light",
-    text: "text-warning",
-    dotColor: "bg-warning",
-    desc: "Dokter belum menerima permintaan",
-  },
-  ONGOING: {
-    label: "Sedang Berlangsung",
-    Icon: MessageSquare,
-    bg: "bg-success-light",
-    text: "text-success",
-    dotColor: "bg-success animate-pulse",
-    desc: "Klik untuk masuk ke ruang chat",
-  },
-  COMPLETED: {
-    label: "Selesai",
-    Icon: Check,
-    bg: "bg-surface",
-    text: "text-text-secondary",
-    dotColor: "bg-text-secondary",
-    desc: "Konsultasi telah selesai",
-  },
-  CANCELLED: {
-    label: "Dibatalkan",
-    Icon: X,
-    bg: "bg-error-light",
-    text: "text-error",
-    dotColor: "bg-error",
-    desc: "Konsultasi dibatalkan",
-  },
+/* ─── Default filter state ───────────────────────────────────────────── */
+const DEFAULT_FILTERS = {
+  status: "ALL",
+  payment: "ALL",
+  dateFrom: "",
+  dateTo: "",
+  sort: "DATE_DESC",
 };
-
-const PAYMENT = {
-  PENDING: { label: "Belum Bayar", text: "text-warning", bg: "bg-warning-light" },
-  PAID:    { label: "Sudah Bayar", text: "text-success", bg: "bg-success-light" },
-  REFUNDED:{ label: "Dikembalikan", text: "text-text-secondary", bg: "bg-surface" },
-};
-
-/* ─── Consultation Card ──────────────────────────────────────────────── */
-function ConsultationCard({ consultation }) {
-  const s = STATUS[consultation.status] || STATUS.CANCELLED;
-  const p = PAYMENT[consultation.paymentStatus] || PAYMENT.PENDING;
-
-  const canChat = consultation.status === "ONGOING";
-  const needsPayment = consultation.paymentStatus === "PENDING";
-
-  return (
-    <div
-      className={`group relative overflow-hidden rounded-2xl border bg-background p-6 transition-all duration-300 ${
-        canChat
-          ? "border-success bg-success-light/10 shadow-[0_0_20px_rgba(34,197,94,0.08)]"
-          : "border-border/60 hover:border-primary/20 hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)]"
-      }`}
-    >
-      {/* Accent indicator top border */}
-      <div
-        className={`absolute top-0 left-0 right-0 h-1 ${
-          consultation.status === "ONGOING"
-            ? "bg-success"
-            : consultation.status === "REQUESTED"
-            ? "bg-warning"
-            : consultation.status === "COMPLETED"
-            ? "bg-text-secondary/30"
-            : "bg-error"
-        }`}
-      />
-
-      <div className="flex flex-col gap-4">
-        {/* Header row */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${s.bg}`}>
-              <s.Icon size={18} strokeWidth={2} className={s.text} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${s.bg} ${s.text}`}>
-                  {s.label}
-                </span>
-                {canChat && (
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
-                  </span>
-                )}
-              </div>
-              <p className="mt-1 text-[12px] text-text-secondary">{s.desc}</p>
-            </div>
-          </div>
-
-          {/* Payment badge */}
-          <span className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold ${p.text} ${p.bg}`}>
-            {p.label}
-          </span>
-        </div>
-
-        {/* Divider */}
-        <div className="h-px bg-border/40 w-full" />
-
-        {/* Info grid */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border border-border/30 bg-surface/30 px-3.5 py-2.5">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-text-secondary/80">ID Konsultasi</p>
-            <p className="mt-1 text-[14px] font-bold text-text-primary">#{consultation.id}</p>
-          </div>
-          <div className="rounded-xl border border-border/30 bg-surface/30 px-3.5 py-2.5">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-text-secondary/80">Biaya Medis</p>
-            <p className="mt-1 text-[14px] font-extrabold text-primary">{formatCurrency(consultation.fee)}</p>
-          </div>
-          <div className="col-span-2 rounded-xl border border-border/30 bg-surface/30 px-3.5 py-2.5 sm:col-span-1">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-text-secondary/80">Tanggal Dibuat</p>
-            <p className="mt-1 text-[13px] font-semibold text-text-secondary">{formatDate(consultation.createdAt)}</p>
-          </div>
-        </div>
-
-        {/* Actions button group */}
-        <div className="flex gap-2.5 mt-2">
-          {needsPayment && consultation.status !== "CANCELLED" && (
-            <Link
-              to={`/consultations/${consultation.id}/payment`}
-              id={`pay-btn-${consultation.id}`}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-warning py-3 text-center text-[14px] font-bold text-white shadow-sm hover:bg-[#D97706] hover:shadow transition-all duration-150"
-            >
-              <CreditCard size={15} strokeWidth={2} />
-              Bayar Sekarang
-            </Link>
-          )}
-
-          {canChat && (
-            <Link
-              to={`/consultations/${consultation.id}/chat`}
-              id={`chat-btn-${consultation.id}`}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary py-3 text-center text-[14px] font-bold text-white shadow-sm hover:bg-primary-hover hover:shadow transition-all duration-150"
-            >
-              <MessageSquare size={15} strokeWidth={2} />
-              Masuk Chat
-            </Link>
-          )}
-
-          {consultation.status === "REQUESTED" && consultation.paymentStatus === "PAID" && (
-            <div className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-warning/20 bg-warning-light/50 py-3 text-center text-[14px] font-semibold text-warning">
-              <Clock size={15} strokeWidth={2} />
-              Menunggu Dokter Konfirmasi
-            </div>
-          )}
-
-          {(consultation.status === "COMPLETED" || consultation.status === "CANCELLED") && (
-            <Link
-              to={`/consultations/${consultation.id}/chat`}
-              id={`history-btn-${consultation.id}`}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border/80 bg-background py-3 text-center text-[14px] font-semibold text-text-secondary hover:border-primary/30 hover:bg-primary-light/30 hover:text-primary transition-all duration-150"
-            >
-              <ClipboardList size={15} strokeWidth={2} />
-              Lihat Riwayat Chat
-            </Link>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ══════════════════════════════════════════════════════════════════════ */
 /*  MAIN PAGE                                                              */
@@ -196,71 +25,114 @@ function ConsultationCard({ consultation }) {
 export default function MyConsultations() {
   const { token } = useAuth();
   const queryClient = useQueryClient();
+  const [filters, setFilters] = useState(DEFAULT_FILTERS);
 
-  const { data: raw, isLoading, isError, error, refetch } = useMyConsultations();
-  const consultations = Array.isArray(raw?.data) ? raw.data
-                      : Array.isArray(raw)        ? raw
-                      : [];
+  const {
+    data: raw,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useMyConsultations();
+  const consultations = Array.isArray(raw?.data)
+    ? raw.data
+    : Array.isArray(raw)
+      ? raw
+      : [];
 
-  /* Sort: ONGOING first, then REQUESTED, then rest by date */
-  const sorted = [...consultations].sort((a, b) => {
-    const order = { ONGOING: 0, REQUESTED: 1, COMPLETED: 2, CANCELLED: 3 };
-    const oa = order[a.status] ?? 9;
-    const ob = order[b.status] ?? 9;
-    if (oa !== ob) return oa - ob;
-    return new Date(b.createdAt) - new Date(a.createdAt);
-  });
-
-  /* Real-time: listen for consultation_accepted event */
+  /* ── Socket refresh ──────────────────────────────────────────────── */
   useEffect(() => {
     if (!token) return;
     const socket = getSocket();
     if (!socket.connected) socket.connect();
-
-    const handleAccepted = () => {
+    const refresh = () =>
       queryClient.invalidateQueries({ queryKey: ["my-consultations"] });
-    };
-
-    socket.on("consultation_accepted", handleAccepted);
-    socket.on("consultation_started", handleAccepted);
+    socket.on("consultation_accepted", refresh);
+    socket.on("consultation_started", refresh);
+    socket.on("consultation_session_ended", refresh);
     return () => {
-      socket.off("consultation_accepted", handleAccepted);
-      socket.off("consultation_started", handleAccepted);
+      socket.off("consultation_accepted", refresh);
+      socket.off("consultation_started", refresh);
+      socket.off("consultation_session_ended", refresh);
     };
   }, [token, queryClient]);
 
-  /* Poll every 10 seconds if there's a REQUESTED & PAID consultation */
+  /* ── Poll when waiting ───────────────────────────────────────────── */
   useEffect(() => {
-    const hasPendingAccept = consultations.some(
-      (c) => c.status === "REQUESTED" && c.paymentStatus === "PAID"
+    const hasPending = consultations.some(
+      (c) => c.status === "REQUESTED" && c.paymentStatus === "PAID",
     );
-    if (!hasPendingAccept) return;
-
+    if (!hasPending) return;
     const interval = setInterval(() => {
       queryClient.invalidateQueries({ queryKey: ["my-consultations"] });
     }, 10000);
-
     return () => clearInterval(interval);
   }, [consultations, queryClient]);
 
+  /* ── Filter + sort ───────────────────────────────────────────────── */
+  const filtered = useMemo(() => {
+    let list = consultations.filter((c) => c.status !== "CANCELLED");
+
+    if (filters.status !== "ALL")
+      list = list.filter((c) => c.status === filters.status);
+    if (filters.payment !== "ALL")
+      list = list.filter((c) => c.paymentStatus === filters.payment);
+    if (filters.dateFrom)
+      list = list.filter(
+        (c) => new Date(c.createdAt) >= new Date(filters.dateFrom),
+      );
+    if (filters.dateTo) {
+      const end = new Date(filters.dateTo);
+      end.setHours(23, 59, 59, 999);
+      list = list.filter((c) => new Date(c.createdAt) <= end);
+    }
+
+    switch (filters.sort) {
+      case "DATE_ASC":
+        list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+        break;
+      case "STATUS":
+        list.sort((a, b) => {
+          const d = (SORT_ORDER[a.status] ?? 9) - (SORT_ORDER[b.status] ?? 9);
+          return d !== 0 ? d : new Date(b.createdAt) - new Date(a.createdAt);
+        });
+        break;
+      case "FEE_DESC":
+        list.sort((a, b) => (b.fee ?? 0) - (a.fee ?? 0));
+        break;
+      case "FEE_ASC":
+        list.sort((a, b) => (a.fee ?? 0) - (b.fee ?? 0));
+        break;
+      default:
+        list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    return list;
+  }, [consultations, filters]);
+
+  const handleFilterChange = (key, value) =>
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  const handleReset = () => setFilters(DEFAULT_FILTERS);
+
   return (
-    <div className="min-h-screen bg-surface">
-      {/* ── Header ──────────────────────────────────────────────────── */}
-      <div className="border-b border-border bg-background">
-        <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6">
+    <div className="bg-surface min-h-screen">
+      {/* ── Page header ──────────────────────────────────────────────── */}
+      <div className="border-border bg-background border-b">
+        <div className="mx-auto max-w-[1152px] px-4 py-[21px] sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-[18px] font-semibold text-text-primary">
+              <h1 className="text-text-primary text-[18px] leading-[1.40] font-semibold">
                 Konsultasi Saya
               </h1>
-              <p className="text-[13px] text-text-secondary">
-                {consultations.length} konsultasi ditemukan
+              <p className="text-text-secondary mt-0.5 text-[13px]">
+                {consultations.length} total &middot; {filtered.length}{" "}
+                ditampilkan
               </p>
             </div>
             <Link
               to="/consultations"
               id="new-consultation-btn"
-              className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[14px] font-semibold text-white transition hover:bg-primary-hover"
+              className="bg-primary hover:bg-primary-hover flex items-center gap-[8px] rounded-xl px-[13px] py-[8px] text-[14px] font-semibold text-white transition-all duration-150"
             >
               <Plus size={16} strokeWidth={2} />
               Konsultasi Baru
@@ -269,54 +141,107 @@ export default function MyConsultations() {
         </div>
       </div>
 
-      {/* ── Content ──────────────────────────────────────────────────── */}
-      <main className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
-        {isLoading && (
-          <div className="space-y-4">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-44 animate-pulse rounded-xl bg-border" />
-            ))}
-          </div>
-        )}
+      {/* ── Body: sidebar + cards ─────────────────────────────────────── */}
+      <div className="mx-auto max-w-[1152px] px-4 py-[34px] sm:px-6 lg:px-8">
+        <div className="flex items-start gap-[34px]">
+          {/* ── LEFT: filter sidebar (288px) ──────────────────────────── */}
+          <FilterSidebar
+            filters={filters}
+            onChange={handleFilterChange}
+            onReset={handleReset}
+          />
 
-        {isError && (
-          <div className="flex flex-col items-center rounded-xl bg-error-light p-8 text-center">
-            <AlertTriangle size={32} strokeWidth={1.75} className="mb-3 text-error" />
-            <p className="font-semibold text-error">Gagal memuat konsultasi</p>
-            <p className="mt-1 text-[14px] text-text-secondary">{error?.message}</p>
-            <button
-              onClick={refetch}
-              className="mt-4 rounded-xl bg-primary px-5 py-2.5 text-[14px] font-semibold text-white hover:bg-primary-hover"
-            >
-              Coba Lagi
-            </button>
-          </div>
-        )}
+          {/* ── RIGHT: card area ──────────────────────────────────────── */}
+          <div className="min-w-0 flex-1">
+            {/* Loading skeleton */}
+            {isLoading && (
+              <div className="grid gap-[21px] sm:grid-cols-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="bg-border/50 h-56 animate-pulse rounded-2xl"
+                  />
+                ))}
+              </div>
+            )}
 
-        {!isLoading && !isError && sorted.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-background py-20 text-center">
-            <Stethoscope size={48} strokeWidth={1.5} className="mb-4 text-text-secondary opacity-40" />
-            <h3 className="text-[16px] font-semibold text-text-primary">Belum ada konsultasi</h3>
-            <p className="mt-1 text-[14px] text-text-secondary">
-              Mulai berkonsultasi dengan dokter terpercaya kami
-            </p>
-            <Link
-              to="/consultations"
-              className="mt-6 rounded-xl bg-primary px-6 py-2.5 text-[14px] font-semibold text-white hover:bg-primary-hover"
-            >
-              Cari Dokter
-            </Link>
-          </div>
-        )}
+            {/* Error state */}
+            {isError && (
+              <div className="bg-error-light flex flex-col items-center rounded-2xl px-8 py-[34px] text-center">
+                <AlertTriangle
+                  size={32}
+                  strokeWidth={1.75}
+                  className="text-error mb-3"
+                />
+                <p className="text-text-primary text-[16px] font-semibold">
+                  Gagal memuat konsultasi
+                </p>
+                <p className="text-text-secondary mt-1 text-[14px]">
+                  {error?.message}
+                </p>
+                <button
+                  onClick={refetch}
+                  className="bg-primary hover:bg-primary-hover mt-[21px] rounded-xl px-[21px] py-[8px] text-[14px] font-semibold text-white transition"
+                >
+                  Coba Lagi
+                </button>
+              </div>
+            )}
 
-        {!isLoading && !isError && sorted.length > 0 && (
-          <div className="space-y-4">
-            {sorted.map((c) => (
-              <ConsultationCard key={c.id} consultation={c} />
-            ))}
+            {/* Empty state */}
+            {!isLoading && !isError && filtered.length === 0 && (
+              <div
+                className="bg-background flex flex-col items-center justify-center rounded-2xl px-8 py-[55px] text-center"
+                style={{
+                  boxShadow:
+                    "0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03)",
+                }}
+              >
+                <Stethoscope
+                  size={48}
+                  strokeWidth={1.5}
+                  className="text-text-secondary mb-[21px] opacity-30"
+                />
+                <h3 className="text-text-primary text-[16px] font-semibold">
+                  {consultations.length === 0
+                    ? "Belum ada konsultasi"
+                    : "Tidak ada hasil"}
+                </h3>
+                <p className="text-text-secondary mt-[5px] text-[14px] leading-[1.55]">
+                  {consultations.length === 0
+                    ? "Mulai berkonsultasi dengan dokter berlisensi kami."
+                    : "Ubah filter untuk menampilkan hasil lain."}
+                </p>
+                {consultations.length === 0 ? (
+                  <Link
+                    to="/consultations"
+                    className="bg-primary hover:bg-primary-hover mt-[21px] rounded-xl px-[21px] py-[8px] text-[14px] font-semibold text-white transition"
+                  >
+                    Cari Dokter
+                  </Link>
+                ) : (
+                  <button
+                    onClick={handleReset}
+                    className="bg-surface text-text-secondary hover:bg-primary-light hover:text-primary mt-[21px] flex items-center gap-[5px] rounded-xl px-[21px] py-[8px] text-[14px] font-semibold transition"
+                  >
+                    <RotateCcw size={14} strokeWidth={2} />
+                    Reset Filter
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Cards — 2-column grid */}
+            {!isLoading && !isError && filtered.length > 0 && (
+              <div className="grid gap-[21px] sm:grid-cols-2">
+                {filtered.map((c) => (
+                  <ConsultationCard key={c.id} consultation={c} />
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </main>
+        </div>
+      </div>
     </div>
   );
 }

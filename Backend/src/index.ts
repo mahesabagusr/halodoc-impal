@@ -16,13 +16,15 @@ const httpServer = createServer(app);
 const PORT = Number(config.express.port ?? "3000");
 const HOST = config.express.host ?? "localhost";
 
+const isDev = process.env.NODE_ENV !== "production";
+
 const defaultCorsOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 ];
-//a
+
 const configuredCorsOrigins =
   process.env.CORS_ORIGINS?.split(",")
     .map((origin) => origin.trim())
@@ -30,10 +32,11 @@ const configuredCorsOrigins =
 
 const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
-    // Requests without an origin header (curl/postman/server-to-server) are allowed.
-    if (!origin) {
-      return callback(null, true);
-    }
+    // In development, allow any origin (LAN devices, phones, etc.)
+    if (isDev) return callback(null, true);
+
+    // No origin header (curl / server-to-server) — always allow
+    if (!origin) return callback(null, true);
 
     if (configuredCorsOrigins.includes(origin)) {
       return callback(null, true);
@@ -67,4 +70,3 @@ runStartupTasks();
 httpServer.listen(PORT, HOST, () => {
   console.log(`Server running on http://${HOST}:${PORT}`);
 });
-

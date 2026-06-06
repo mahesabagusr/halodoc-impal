@@ -5,11 +5,26 @@ import {
   useMyConsultations,
   useSendMessage,
   useChatHistory,
+  useGeneratePrescription,
 } from "../../../hooks/useConsultations";
 import { useConsultationChat } from "../../../hooks/useConsultationChat";
+import { useProducts } from "../../../hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSocket } from "../../../lib/socket";
-import { Bell, LogOut, Send, Loader2, MessageSquare, Stethoscope } from "lucide-react";
+import {
+  Bell,
+  LogOut,
+  Send,
+  Loader2,
+  MessageSquare,
+  Stethoscope,
+  Plus,
+  Trash,
+  X,
+  Pill,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 /* ─── JWT Decode ─────────────────────────────────────────────────────── */
 function decodeTokenRole(token) {
@@ -69,10 +84,37 @@ function EmptyState({ Icon = MessageSquare, title, sub }) {
   );
 }
 
-/* ─── Chat Window ────────────────────────────────────────────────────── */
-function ChatWindow({ consultationId, currentUserId }) {
+function ChatWindow({ consultationId, currentUserId, consultation }) {
   const [input, setInput] = useState("");
   const bottomRef = useRef(null);
+
+  /* ── Prescription States ─────────────────────────────────────────── */
+  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
+  const [prescNotes, setPrescNotes] = useState("");
+  const [prescItems, setPrescItems] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isPrescExpanded, setIsPrescExpanded] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  /* ── Fetch Products for prescription creator ─────────────────────── */
+  const { products, isLoading: loadingProducts } = useProducts({
+    search: searchQuery,
+    limit: 5,
+  });
+
+  const generatePrescriptionMutation = useGeneratePrescription(consultationId, {
+    onSuccess: () => {
+      setIsPrescriptionModalOpen(false);
+      setPrescNotes("");
+      setPrescItems([]);
+      queryClient.invalidateQueries({ queryKey: ["my-consultations"] });
+      queryClient.invalidateQueries({ queryKey: ["chat", consultationId] });
+    },
+    onError: (err) => {
+      alert(err?.message || "Gagal membuat resep");
+    },
+  });
 
   const { data: historyRaw, isLoading } = useChatHistory(consultationId);
   const history = Array.isArray(historyRaw?.data)
@@ -127,6 +169,61 @@ function ChatWindow({ consultationId, currentUserId }) {
         </span>
       </div>
 
+      {/* ── Collapsible Prescription Card ────────────────────────────── */}
+      {consultation?.prescription && (
+        <div className="border-b border-border bg-pink-50/45 px-6 py-4 shrink-0 transition-all duration-300">
+          <div className="mx-auto max-w-[720px]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-light text-primary animate-bounce">
+                  <Pill size={16} />
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-text-primary">Resep Dokter Tersedia</p>
+                  <p className="text-[11px] text-text-secondary">
+                    {consultation.prescription.items?.length || 0} obat diresepkan
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPrescExpanded(!isPrescExpanded)}
+                className="rounded-lg p-1.5 text-text-secondary hover:bg-surface transition cursor-pointer"
+              >
+                {isPrescExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+            </div>
+
+            {/* Expanded Item list */}
+            {isPrescExpanded && (
+              <div className="mt-4 border-t border-border/60 pt-4 animate-in slide-in-from-top-2 duration-200">
+                <h4 className="text-[12px] font-bold text-text-primary uppercase tracking-wider mb-2">Daftar Resep Obat</h4>
+                <div className="space-y-2.5">
+                  {consultation.prescription.items?.map((item) => (
+                    <div key={item.id} className="flex items-start justify-between rounded-xl bg-background border border-border/50 p-3">
+                      <div>
+                        <p className="text-[13px] font-semibold text-text-primary">
+                          {item.productId ? item.product?.name : item.customProductName}
+                        </p>
+                        <p className="text-[11px] text-text-secondary mt-0.5">Dosage: {item.dosage}</p>
+                      </div>
+                      <span className="rounded-lg bg-surface px-2.5 py-1 text-[11px] font-bold text-text-secondary">
+                        Qty: {item.quantity}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {consultation.prescription.notes && (
+                  <div className="mt-3.5 rounded-xl bg-background border border-border/50 p-3">
+                    <h5 className="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Catatan Dokter</h5>
+                    <p className="text-[13px] text-text-primary mt-1 leading-[1.5]">{consultation.prescription.notes}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto px-4 py-4">
         {messages.length === 0 && (
@@ -152,6 +249,16 @@ function ChatWindow({ consultationId, currentUserId }) {
           onSubmit={handleSend}
           className="flex items-end gap-3"
         >
+          {!consultation?.prescription && (
+            <button
+              type="button"
+              onClick={() => setIsPrescriptionModalOpen(true)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-text-secondary hover:text-primary hover:border-primary transition cursor-pointer mb-0.5"
+              title="Tambah Resep Obat"
+            >
+              <Plus size={18} strokeWidth={2.5} />
+            </button>
+          )}
           <textarea
             id={`doctor-chat-input-${consultationId}`}
             rows={1}
@@ -180,6 +287,236 @@ function ChatWindow({ consultationId, currentUserId }) {
           </button>
         </form>
       </div>
+
+      {/* ── Prescription Creator Modal ────────────────────────────────── */}
+      {isPrescriptionModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="relative flex h-full max-h-[550px] w-full max-w-[500px] flex-col rounded-3xl bg-background shadow-2xl border border-border/40 overflow-hidden animate-in fade-in zoom-in duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <Pill className="text-primary animate-pulse" size={18} />
+                <h3 className="text-[16px] font-bold text-text-primary">Buat Resep Obat</h3>
+              </div>
+              <button
+                onClick={() => setIsPrescriptionModalOpen(false)}
+                className="rounded-full p-1.5 text-text-secondary hover:bg-surface transition cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {/* Product search box */}
+              <div className="relative">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Cari Obat</label>
+                <input
+                  type="text"
+                  placeholder="Ketik nama obat (misal: paracetamol)..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-[13px] outline-none transition focus:border-primary focus:bg-background"
+                />
+                
+                {/* Search results */}
+                {searchQuery.trim() && (
+                  <div className="absolute left-0 right-0 z-20 mt-1.5 max-h-[180px] overflow-y-auto rounded-xl border border-border bg-background shadow-lg">
+                    {loadingProducts ? (
+                      <div className="p-4 text-center text-[12px] text-text-secondary">Mencari...</div>
+                    ) : (
+                      <>
+                        {products.map((prod) => (
+                          <button
+                            key={prod.id}
+                            type="button"
+                            onClick={() => {
+                              if (!prescItems.some(item => item.productId === prod.id)) {
+                                setPrescItems([...prescItems, {
+                                  product: prod,
+                                  productId: prod.id,
+                                  dosage: "2x sehari",
+                                  quantity: 1
+                                }]);
+                              }
+                              setSearchQuery("");
+                            }}
+                            className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[13px] hover:bg-surface border-b border-border/45 last:border-0 cursor-pointer"
+                          >
+                            {prod.imageUrl ? (
+                              <img src={prod.imageUrl} alt={prod.name} className="h-8 w-8 rounded-lg object-cover" />
+                            ) : (
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface text-text-secondary">
+                                <Pill size={14} />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="truncate font-medium text-text-primary">{prod.name}</p>
+                              <p className="text-[11px] text-text-secondary">Stok: {prod.stock} • Rp {prod.price.toLocaleString("id-ID")}</p>
+                            </div>
+                            <Plus size={14} className="text-primary shrink-0" />
+                          </button>
+                        ))}
+                        {/* Custom medicine creation option */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const trimmed = searchQuery.trim();
+                            if (trimmed && !prescItems.some(item => item.customProductName === trimmed)) {
+                              setPrescItems([...prescItems, {
+                                product: { name: trimmed, price: 0, stock: 999 },
+                                productId: null,
+                                customProductName: trimmed,
+                                dosage: "2x sehari",
+                                quantity: 1
+                              }]);
+                            }
+                            setSearchQuery("");
+                          }}
+                          className="flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] hover:bg-surface text-primary border-t border-border/45 cursor-pointer font-medium"
+                        >
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-light text-primary shrink-0">
+                            <Plus size={14} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="truncate text-primary font-semibold">Gunakan "{searchQuery.trim()}"</p>
+                            <p className="text-[11px] text-text-secondary">Tambahkan sebagai obat kustom</p>
+                          </div>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Added prescription items list */}
+              <div className="space-y-3">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">
+                  Daftar Resep ({prescItems.length})
+                </label>
+                {prescItems.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-border/80 p-8 text-center text-[13px] text-text-secondary bg-surface/10">
+                    Belum ada obat yang ditambahkan. Cari obat di atas untuk menambahkan.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {prescItems.map((item, index) => (
+                      <div key={item.productId ?? `custom-${index}`} className="flex flex-col gap-2 rounded-2xl border border-border p-3.5 bg-surface/30">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-semibold text-text-primary truncate">
+                              {item.productId ? item.product.name : item.customProductName}
+                            </p>
+                            <p className="text-[11px] text-text-secondary">
+                              {item.productId ? `Stok: ${item.product.stock}` : "Obat Kustom (Bebas)"}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPrescItems(prescItems.filter((_, i) => i !== index));
+                            }}
+                            className="rounded-full p-1 text-text-secondary hover:bg-error-light hover:text-error transition cursor-pointer"
+                          >
+                            <Trash size={14} />
+                          </button>
+                        </div>
+                        
+                        <div className="flex items-center gap-3 mt-1">
+                          {/* Dosage Input */}
+                          <div className="flex-1">
+                            <input
+                              type="text"
+                              placeholder="Cth: 2x sehari"
+                              value={item.dosage}
+                              onChange={(e) => {
+                                const copy = [...prescItems];
+                                copy[index].dosage = e.target.value;
+                                setPrescItems(copy);
+                              }}
+                              className="w-full rounded-lg border border-border bg-background px-3 py-1.5 text-[12px] outline-none focus:border-primary"
+                            />
+                          </div>
+
+                          {/* Quantity control */}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const copy = [...prescItems];
+                                copy[index].quantity = Math.max(1, copy[index].quantity - 1);
+                                setPrescItems(copy);
+                              }}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-background text-[14px] hover:bg-surface font-semibold cursor-pointer"
+                            >
+                              -
+                            </button>
+                            <span className="w-5 text-center text-[13px] font-medium text-text-primary">{item.quantity}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const copy = [...prescItems];
+                                copy[index].quantity = item.productId
+                                  ? Math.min(item.product.stock, copy[index].quantity + 1)
+                                  : copy[index].quantity + 1;
+                                setPrescItems(copy);
+                              }}
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-background text-[14px] hover:bg-surface font-semibold cursor-pointer"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* General notes */}
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-text-secondary">Catatan Dokter</label>
+                <textarea
+                  placeholder="Petunjuk penggunaan umum atau saran medis lainnya..."
+                  rows={2}
+                  value={prescNotes}
+                  onChange={(e) => setPrescNotes(e.target.value)}
+                  className="mt-1.5 w-full resize-none rounded-xl border border-border bg-surface px-4 py-2.5 text-[13px] outline-none transition focus:border-primary focus:bg-background"
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t border-border px-5 py-4 flex gap-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsPrescriptionModalOpen(false)}
+                className="flex-1 rounded-xl border border-border bg-background py-2 text-[13px] font-semibold text-text-secondary hover:bg-surface transition cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={prescItems.length === 0 || generatePrescriptionMutation.isPending}
+                onClick={() => {
+                  generatePrescriptionMutation.mutate({
+                    notes: prescNotes,
+                    items: prescItems.map(i => ({
+                      productId: i.productId,
+                      customProductName: i.customProductName,
+                      dosage: i.dosage,
+                      quantity: i.quantity
+                    }))
+                  });
+                }}
+                className="flex-1 rounded-xl bg-primary py-2 text-[13px] font-semibold text-white hover:bg-primary-hover transition disabled:bg-border disabled:text-text-secondary cursor-pointer"
+              >
+                {generatePrescriptionMutation.isPending ? "Mengirim..." : "Kirim Resep"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -440,6 +777,7 @@ export default function DoctorDashboard() {
                 key={activeConsult.id}
                 consultationId={activeConsult.id}
                 currentUserId={currentUserId}
+                consultation={activeConsult}
               />
             </>
           )}

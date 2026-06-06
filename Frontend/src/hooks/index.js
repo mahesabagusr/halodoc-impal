@@ -14,6 +14,7 @@ export {
   useRespondToConsultation,
   useMyConsultations,
   useVerifyPayment,
+  useGeneratePrescription,
 } from "./useConsultations";
 export { useDoctors, useDoctorById } from "./useDoctors";
 export { useMidtrans } from "./useMidtrans";

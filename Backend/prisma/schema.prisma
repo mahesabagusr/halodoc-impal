@@ -216,13 +216,14 @@ model Prescription {
 }
 
 model PrescriptionItem {
-  id             Int          @id @default(autoincrement())
-  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
-  prescriptionId Int
-  product        Product      @relation(fields: [productId], references: [id])
-  productId      Int
-  dosage         String
-  quantity       Int
+  id                Int          @id @default(autoincrement())
+  prescription      Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  prescriptionId    Int
+  product           Product?     @relation(fields: [productId], references: [id])
+  productId         Int?
+  customProductName String?      // For custom medicines not in catalog
+  dosage            String
+  quantity          Int
 
   @@index([prescriptionId])
   @@index([productId])
