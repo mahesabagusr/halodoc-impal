@@ -97,11 +97,30 @@ export default class ConsultationsRepository {
     });
   }
 
-  static async generatePrescription(consultationId: number, notes?: string) {
+  static async generatePrescription(
+    consultationId: number,
+    notes?: string,
+    items?: { productId?: number | null; customProductName?: string | null; dosage: string; quantity: number }[],
+  ) {
     return prisma.prescription.create({
       data: {
         consultationId,
         notes,
+        items: items
+          ? {
+              create: items.map((item) => ({
+                productId: item.productId || null,
+                customProductName: item.customProductName || null,
+                dosage: item.dosage,
+                quantity: item.quantity,
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        items: {
+          include: { product: true },
+        },
       },
     });
   }
@@ -146,6 +165,27 @@ export default class ConsultationsRepository {
     return prisma.consultation.findUnique({
       where: { id },
       include: {
+        patient: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            telephoneNumber: true,
+          },
+        },
+        doctor: {
+          select: {
+            id: true,
+            fullName: true,
+            doctorProfile: {
+              select: {
+                specialization: {
+                  select: { name: true },
+                },
+              },
+            },
+          },
+        },
         prescription: {
           include: {
             items: {

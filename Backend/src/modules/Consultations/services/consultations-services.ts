@@ -358,20 +358,8 @@ export default class ConsultationsService {
         },
       ];
 
-      // Add prescription items if available
-      const prescriptionItems = consultation.prescription?.items ?? [];
-      for (const item of prescriptionItems) {
-        itemDetails.push({
-          id: `PROD-${item.product.id}`,
-          price: item.product.price,
-          quantity: item.quantity,
-          name: item.product.name,
-        });
-      }
-
-      // Total gross amount = consultation fee + prescription items
-      const grossAmount =
-        itemDetails.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      // Total gross amount = consultation fee
+      const grossAmount = consultation.fee;
 
       const frontendUrl =
         process.env.FRONTEND_URL || "http://localhost:5173";
@@ -593,7 +581,13 @@ export default class ConsultationsService {
   static async generatePrescription(
     consultationId: number,
     notes?: string,
-  ): Promise<ResponseResult<GeneratedPrescription>> {
+    items?: {
+      productId?: number | null;
+      customProductName?: string | null;
+      dosage: string;
+      quantity: number;
+    }[],
+  ): Promise<ResponseResult<any>> {
     try {
       const consultation =
         await ConsultationsRepository.getConsultationById(consultationId);
@@ -603,6 +597,7 @@ export default class ConsultationsService {
       const auth = await ConsultationsRepository.generatePrescription(
         consultationId,
         notes,
+        items,
       );
       return wrapper.data(auth);
     } catch (err) {
