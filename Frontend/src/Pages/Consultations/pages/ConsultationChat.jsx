@@ -129,6 +129,37 @@ function StatusScreen({ status }) {
 /* ══════════════════════════════════════════════════════════════════════ */
 /*  MAIN CHAT PAGE                                                         */
 /* ══════════════════════════════════════════════════════════════════════ */
+const SESSION_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+
+function useSessionCountdown(startTime) {
+  const [remaining, setRemaining] = useState(null);
+
+  useEffect(() => {
+    if (!startTime) return;
+    const start = new Date(startTime).getTime();
+
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const left = Math.max(0, SESSION_DURATION_MS - elapsed);
+      setRemaining(left);
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [startTime]);
+
+  return remaining;
+}
+
+function formatCountdown(ms) {
+  if (ms === null) return null;
+  const totalSec = Math.ceil(ms / 1000);
+  const m = Math.floor(totalSec / 60).toString().padStart(2, "0");
+  const s = (totalSec % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
+}
+
 export default function ConsultationChat() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -148,6 +179,12 @@ export default function ConsultationChat() {
     : Array.isArray(historyRaw)
     ? historyRaw
     : [];
+
+  /* ── 30-minute session countdown ─────────────────────────────────── */
+  const startTime = consult?.status === "ONGOING" ? consult?.startTime : null;
+  const remainingMs = useSessionCountdown(startTime);
+  const countdown = formatCountdown(remainingMs);
+  const isWarning = remainingMs !== null && remainingMs < 5 * 60 * 1000;
 
   /* ── Socket: real-time messages (only when ONGOING) ──────────────── */
   const { messages, isConnected, connectionError } = useConsultationChat(
@@ -177,6 +214,18 @@ export default function ConsultationChat() {
     return () => clearInterval(interval);
   }, [consult, id, queryClient]);
 
+  /* ── Fallback: force-refresh when countdown hits 0 ───────────────── */
+  useEffect(() => {
+    if (remainingMs !== 0) return;
+    // Small grace period then invalidate — catches cases where the
+    // socket event was missed (server restart, network blip, etc.)
+    const t = setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ["consultation", id] });
+      queryClient.invalidateQueries({ queryKey: ["chat", id] });
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [remainingMs, id, queryClient]);
+
   /* ── Socket: listen for consultation_accepted event ─────────────── */
   useEffect(() => {
     if (!token) return;
@@ -189,11 +238,18 @@ export default function ConsultationChat() {
       queryClient.invalidateQueries({ queryKey: ["chat", id] });
     };
 
+    const handleSessionEnded = () => {
+      queryClient.invalidateQueries({ queryKey: ["consultation", id] });
+      queryClient.invalidateQueries({ queryKey: ["chat", id] });
+    };
+
     socket.on("consultation_accepted", handleAccepted);
     socket.on("consultation_started", handleAccepted);
+    socket.on("consultation_session_ended", handleSessionEnded);
     return () => {
       socket.off("consultation_accepted", handleAccepted);
       socket.off("consultation_started", handleAccepted);
+      socket.off("consultation_session_ended", handleSessionEnded);
     };
   }, [token, id, queryClient]);
 
@@ -337,6 +393,21 @@ export default function ConsultationChat() {
             </span>
           </div>
         </div>
+
+        {/* ── Countdown timer ──────────────────────────────────── */}
+        {countdown !== null && (
+          <span
+            className={`ml-2 shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-bold tabular-nums ${
+              isWarning
+                ? "animate-pulse bg-error-light text-error"
+                : "bg-surface text-text-secondary"
+            }`}
+            title="Sisa waktu konsultasi"
+          >
+            <Clock size={11} className="mr-1 inline -mt-0.5" />
+            {countdown}
+          </span>
+        )}
       </header>
 
       {/* Messages — constrained to 720px for readability per DESIGN.md §11 */}
