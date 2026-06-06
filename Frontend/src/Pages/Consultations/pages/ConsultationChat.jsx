@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import {
   useConsultationDetail,
@@ -9,126 +9,15 @@ import {
 import { useConsultationChat } from "../../../hooks/useConsultationChat";
 import { useQueryClient } from "@tanstack/react-query";
 import { getSocket } from "../../../lib/socket";
-import { ArrowLeft, Send, Loader2, Clock, CheckCircle2, XCircle, MessageSquare } from "lucide-react";
+import { Send, Loader2, Clock, MessageSquare } from "lucide-react";
+import { formatDate } from "../helpers/formatters";
 
-/* ─── Helpers ────────────────────────────────────────────────────────── */
-function formatTime(ts) {
-  if (!ts) return "";
-  return new Date(ts).toLocaleTimeString("id-ID", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+import ChatBubble from "../components/ChatBubble";
+import ChatHeader from "../components/ChatHeader";
+import WaitingScreen from "../components/WaitingScreen";
+import StatusScreen from "../components/StatusScreen";
 
-function formatDate(ts) {
-  if (!ts) return "";
-  return new Date(ts).toLocaleDateString("id-ID", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-}
-
-/* ─── Chat Bubble (DESIGN.md §11) ────────────────────────────────────── */
-function ChatBubble({ message, isMine }) {
-  return (
-    <div className={`flex ${isMine ? "justify-end" : "justify-start"} mb-2`}>
-      <div
-        className={`max-w-[75%] px-4 py-2.5 text-[14px] leading-[1.55] ${
-          isMine
-            ? "rounded-2xl rounded-br-[4px] bg-primary-light text-text-primary"
-            : "rounded-2xl rounded-bl-[4px] bg-[#F3F4F6] text-text-primary"
-        }`}
-      >
-        <p>{message.content}</p>
-        <p
-          className={`mt-1 text-[11px] text-right text-text-secondary`}
-        >
-          {formatTime(message.timestamp)}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Waiting Screen (REQUESTED + PAID) ─────────────────────────────── */
-function WaitingScreen({ consultationId }) {
-  return (
-    <div className="flex h-full flex-col items-center justify-center bg-surface px-6 text-center">
-      {/* Pulsing ring animation */}
-      <div className="relative mb-8">
-        <div className="absolute inset-0 animate-ping rounded-full bg-primary opacity-10" />
-        <div className="absolute inset-2 animate-ping rounded-full bg-primary opacity-10" style={{ animationDelay: "150ms" }} />
-        <div className="relative flex h-24 w-24 items-center justify-center rounded-full bg-primary-light">
-          <Clock size={40} strokeWidth={1.75} className="text-primary" />
-        </div>
-      </div>
-
-      <h2 className="text-[18px] font-semibold text-text-primary">
-        Menunggu Dokter
-      </h2>
-      <p className="mt-2 max-w-sm text-[14px] leading-[1.55] text-text-secondary">
-        Permintaan konsultasi Anda sudah dibayar. Dokter sedang memproses
-        permintaan — halaman ini akan otomatis terbuka saat dokter menerima.
-      </p>
-
-      {/* Animated dots */}
-      <div className="mt-6 flex items-center gap-1.5">
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="h-2 w-2 animate-bounce rounded-full bg-primary"
-            style={{ animationDelay: `${i * 0.15}s` }}
-          />
-        ))}
-      </div>
-
-      <p className="mt-4 text-[11px] text-text-secondary">
-        Konsultasi #{consultationId} · Auto-refresh setiap 10 detik
-      </p>
-
-      <Link
-        to="/history"
-        className="mt-8 text-[13px] font-semibold text-primary hover:underline"
-      >
-        Kembali ke Daftar Konsultasi
-      </Link>
-    </div>
-  );
-}
-
-/* ─── Completed/Cancelled Screen ────────────────────────────────────── */
-function StatusScreen({ status }) {
-  const isCompleted = status === "COMPLETED";
-  return (
-    <div className="flex h-full flex-col items-center justify-center bg-surface px-6 text-center">
-      {isCompleted ? (
-        <CheckCircle2 size={64} strokeWidth={1.5} className="mb-4 text-success" />
-      ) : (
-        <XCircle size={64} strokeWidth={1.5} className="mb-4 text-error" />
-      )}
-      <h2 className="text-[18px] font-semibold text-text-primary">
-        {isCompleted ? "Konsultasi Selesai" : "Konsultasi Dibatalkan"}
-      </h2>
-      <p className="mt-2 max-w-sm text-[14px] text-text-secondary">
-        {isCompleted
-          ? "Sesi konsultasi ini telah berakhir."
-          : "Konsultasi ini telah dibatalkan."}
-      </p>
-      <Link
-        to="/history"
-        className="mt-6 rounded-xl bg-primary px-6 py-2.5 text-[14px] font-semibold text-white hover:bg-primary-hover"
-      >
-        Kembali ke Konsultasi Saya
-      </Link>
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════ */
-/*  MAIN CHAT PAGE                                                         */
-/* ══════════════════════════════════════════════════════════════════════ */
+/* ─── Session countdown hook ─────────────────────────────────────────── */
 const SESSION_DURATION_MS = 30 * 60 * 1000; // 30 minutes
 
 function useSessionCountdown(startTime) {
@@ -160,6 +49,9 @@ function formatCountdown(ms) {
   return `${m}:${s}`;
 }
 
+/* ══════════════════════════════════════════════════════════════════════ */
+/*  MAIN CHAT PAGE                                                         */
+/* ══════════════════════════════════════════════════════════════════════ */
 export default function ConsultationChat() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -217,8 +109,6 @@ export default function ConsultationChat() {
   /* ── Fallback: force-refresh when countdown hits 0 ───────────────── */
   useEffect(() => {
     if (remainingMs !== 0) return;
-    // Small grace period then invalidate — catches cases where the
-    // socket event was missed (server restart, network blip, etc.)
     const t = setTimeout(() => {
       queryClient.invalidateQueries({ queryKey: ["consultation", id] });
       queryClient.invalidateQueries({ queryKey: ["chat", id] });
@@ -233,7 +123,6 @@ export default function ConsultationChat() {
     if (!socket.connected) socket.connect();
 
     const handleAccepted = () => {
-      // Refresh the consultation data when doctor accepts
       queryClient.invalidateQueries({ queryKey: ["consultation", id] });
       queryClient.invalidateQueries({ queryKey: ["chat", id] });
     };
@@ -282,21 +171,14 @@ export default function ConsultationChat() {
   if (consult?.status === "REQUESTED" && consult?.paymentStatus === "PAID") {
     return (
       <div className="flex h-screen flex-col bg-surface">
-        {/* Header */}
-        <header className="flex items-center gap-3 border-b border-border bg-background px-4 py-3">
-          <button
-            onClick={() => navigate("/history")}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary hover:bg-surface"
-          >
-            <ArrowLeft size={20} strokeWidth={2} />
-          </button>
-          <p className="text-[14px] font-semibold text-text-primary">
-            Konsultasi #{id}
-          </p>
-          <span className="ml-auto rounded-full bg-warning-light px-2.5 py-0.5 text-[11px] font-semibold text-warning">
-            Menunggu
-          </span>
-        </header>
+        <ChatHeader
+          doctor={consult?.doctor}
+          badge={
+            <span className="ml-auto rounded-full bg-warning-light px-2.5 py-0.5 text-[11px] font-semibold text-warning">
+              Menunggu
+            </span>
+          }
+        />
         <WaitingScreen consultationId={id} />
       </div>
     );
@@ -309,24 +191,20 @@ export default function ConsultationChat() {
   ) {
     return (
       <div className="flex h-screen flex-col bg-surface">
-        <header className="flex items-center gap-3 border-b border-border bg-background px-4 py-3">
-          <button
-            onClick={() => navigate("/history")}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary hover:bg-surface"
-          >
-            <ArrowLeft size={20} strokeWidth={2} />
-          </button>
-          <p className="text-[14px] font-semibold text-text-primary">Konsultasi #{id}</p>
-          <span
-            className={`ml-auto rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-              consult.status === "COMPLETED"
-                ? "bg-success-light text-success"
-                : "bg-error-light text-error"
-            }`}
-          >
-            {consult.status === "COMPLETED" ? "Selesai" : "Dibatalkan"}
-          </span>
-        </header>
+        <ChatHeader
+          doctor={consult?.doctor}
+          badge={
+            <span
+              className={`ml-auto rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                consult.status === "COMPLETED"
+                  ? "bg-success-light text-success"
+                  : "bg-error-light text-error"
+              }`}
+            >
+              {consult.status === "COMPLETED" ? "Selesai" : "Dibatalkan"}
+            </span>
+          }
+        />
 
         {/* Still allow reading history for completed/cancelled */}
         {history.length > 0 ? (
@@ -356,61 +234,47 @@ export default function ConsultationChat() {
   return (
     <div className="flex h-screen flex-col bg-surface">
       {/* Header */}
-      <header className="flex items-center gap-3 border-b border-border bg-background px-4 py-3">
-        <button
-          id="chat-back-btn"
-          onClick={() => navigate("/history")}
-          className="flex h-9 w-9 items-center justify-center rounded-full text-text-secondary transition hover:bg-surface"
-        >
-          <ArrowLeft size={20} strokeWidth={2} />
-        </button>
-
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-light text-[14px] font-bold text-primary">
-          Dr
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <p className="truncate text-[14px] font-semibold text-text-primary">
-            Konsultasi #{id}
-          </p>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-success-light px-2 py-0.5 text-[11px] font-semibold text-success">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
-              Sedang Berlangsung
+      <ChatHeader
+        backBtnId="chat-back-btn"
+        doctor={consult?.doctor}
+        badge={
+          countdown !== null && (
+            <span
+              className={`ml-2 shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-bold tabular-nums ${
+                isWarning
+                  ? "animate-pulse bg-error-light text-error"
+                  : "bg-surface text-text-secondary"
+              }`}
+              title="Sisa waktu konsultasi"
+            >
+              <Clock size={11} className="mr-1 inline -mt-0.5" />
+              {countdown}
             </span>
-            {/* Socket status */}
-            <span className="flex items-center gap-1 text-[11px] text-text-secondary">
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${
-                  isConnected ? "animate-pulse bg-success" : "bg-border"
-                }`}
-              />
-              {connectionError
-                ? "Koneksi gagal"
-                : isConnected
-                ? "Live"
-                : "Menghubungkan..."}
-            </span>
-          </div>
-        </div>
-
-        {/* ── Countdown timer ──────────────────────────────────── */}
-        {countdown !== null && (
-          <span
-            className={`ml-2 shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-bold tabular-nums ${
-              isWarning
-                ? "animate-pulse bg-error-light text-error"
-                : "bg-surface text-text-secondary"
-            }`}
-            title="Sisa waktu konsultasi"
-          >
-            <Clock size={11} className="mr-1 inline -mt-0.5" />
-            {countdown}
+          )
+        }
+      >
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 rounded-full bg-success-light px-2 py-0.5 text-[11px] font-semibold text-success">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
+            Sedang Berlangsung
           </span>
-        )}
-      </header>
+          {/* Socket status */}
+          <span className="flex items-center gap-1 text-[11px] text-text-secondary">
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                isConnected ? "animate-pulse bg-success" : "bg-border"
+              }`}
+            />
+            {connectionError
+              ? "Koneksi gagal"
+              : isConnected
+              ? "Live"
+              : "Menghubungkan..."}
+          </span>
+        </div>
+      </ChatHeader>
 
-      {/* Messages — constrained to 720px for readability per DESIGN.md §11 */}
+      {/* Messages — constrained to 720px for readability */}
       <main className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto max-w-[720px]">
           {messages.length === 0 && (

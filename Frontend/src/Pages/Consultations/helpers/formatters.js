@@ -42,6 +42,21 @@ export function formatCurrency(amount) {
 }
 
 /**
+ * Format timestamp menjadi tanggal singkat + jam
+ * @example "2 Jun 2026, 14:30"
+ */
+export function formatShortDate(ts) {
+  if (!ts) return "";
+  return new Date(ts).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+/**
  * Menampilkan waktu relatif dari timestamp
  * @example "5 menit yang lalu"
  */

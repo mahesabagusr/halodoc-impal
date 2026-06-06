@@ -531,7 +531,7 @@ export const getMyConsultations = async (
       orderBy: { createdAt: "desc" },
     });
 
-    // For doctor: include patient name
+    // For doctor: include patient name; for patient: include doctor name + specialization
     let result: any[] = consultations;
     if (role === "DOCTOR") {
       result = await Promise.all(
@@ -541,6 +541,33 @@ export const getMyConsultations = async (
             select: { id: true, fullName: true, email: true },
           });
           return { ...c, patient };
+        }),
+      );
+    } else {
+      result = await Promise.all(
+        consultations.map(async (c) => {
+          const doctor = await prisma.user.findUnique({
+            where: { id: c.doctorId },
+            select: {
+              id: true,
+              fullName: true,
+              doctorProfile: {
+                select: {
+                  specialization: { select: { name: true } },
+                },
+              },
+            },
+          });
+          return {
+            ...c,
+            doctor: doctor
+              ? {
+                  id: doctor.id,
+                  fullName: doctor.fullName,
+                  specialization: doctor.doctorProfile?.specialization?.name ?? null,
+                }
+              : null,
+          };
         }),
       );
     }
