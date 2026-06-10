@@ -52,7 +52,6 @@ function ProductPage() {
   const handleCategoryChange = (val) => { setCategoryName(val); setPage(1); };
   const handleMinPriceChange = (e) => { setMinPrice(e.target.value); setPage(1); };
   const handleMaxPriceChange = (e) => { setMaxPrice(e.target.value); setPage(1); };
-  const handleSortChange = (e) => { setSort(e.target.value); setPage(1); };
 
   // Build sort params from combined "sortBy:sortOrder" value
   const [sortBy, sortOrder] = sort.split(":");

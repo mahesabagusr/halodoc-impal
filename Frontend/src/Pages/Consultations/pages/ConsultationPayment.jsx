@@ -5,45 +5,12 @@ import {
   useConsultationDetail,
   usePayConsultation,
 } from "../../../hooks/useConsultations";
-import { AlertTriangle, Check, Loader2 } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { formatCurrency } from "../helpers/formatters";
 
-const STATUS_STYLES = {
-  REQUESTED: "bg-warning-light text-warning",
-  ONGOING: "bg-warning-light text-warning",
-  COMPLETED: "bg-success-light text-success",
-  CANCELLED: "bg-error-light text-error",
-};
-
-const PAYMENT_STYLES = {
-  PENDING: "bg-warning-light text-warning",
-  PAID: "bg-success-light text-success",
-  REFUNDED: "bg-surface text-text-secondary",
-};
-
-function StatusBadge({ value, styleMap }) {
-  const cls = styleMap[value] ?? "bg-surface text-text-secondary";
-  return (
-    <span
-      className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${cls}`}
-    >
-      {value}
-    </span>
-  );
-}
-
-function PaymentSkeleton() {
-  return (
-    <div className="bg-surface min-h-screen py-12">
-      <div className="mx-auto max-w-xl px-4">
-        <div className="bg-background animate-pulse space-y-4 rounded-xl p-8">
-          <div className="bg-border mx-auto h-6 w-48 rounded" />
-          <div className="bg-surface h-40 rounded-xl" />
-          <div className="bg-border h-12 rounded-xl" />
-        </div>
-      </div>
-    </div>
-  );
-}
+import PaymentSkeleton from "../components/PaymentSkeleton";
+import StatusBadge from "../components/StatusBadge";
+import { STATUS_STYLES, PAYMENT_STYLES } from "../../../constants/consultationConfig";
 
 export default function ConsultationPayment() {
   const { id } = useParams();
@@ -185,11 +152,7 @@ export default function ConsultationPayment() {
                   Total Biaya
                 </span>
                 <span className="text-primary text-[24px] font-bold">
-                  {new Intl.NumberFormat("id-ID", {
-                    style: "currency",
-                    currency: "IDR",
-                    minimumFractionDigits: 0,
-                  }).format(consData?.fee ?? 0)}
+                  {formatCurrency(consData?.fee)}
                 </span>
               </div>
             </div>

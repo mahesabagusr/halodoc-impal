@@ -10,6 +10,7 @@ import ConsultationsRepository from "@/modules/Consultations/repositories/consul
 import { ConsultationStatus } from "@/generated/prisma";
 import { getIO, emitMessageSafely } from "@/helpers/utils/socket";
 import prisma from "@/helpers/db/prisma/client";
+import { CreatePrescriptionSchema } from "@/schemas/consultation-schema";
 
 export const requestConsultation = async (
   req: Request,
@@ -178,7 +179,8 @@ export const getConsultationById = async (
 ): Promise<void> => {
   try {
     const consultationId = parseInt(req.params.id as string, 10);
-    const result = await ConsultationsService.getConsultationById(consultationId);
+    const result =
+      await ConsultationsService.getConsultationById(consultationId);
 
     if (result.err) {
       return wrapper.response(
@@ -326,11 +328,25 @@ export const generatePrescription = async (
 ): Promise<void> => {
   try {
     const consultationId = parseInt(req.params.id as string, 10);
-    const { notes } = req.body;
+
+    // Validate request body
+    const parsed = CreatePrescriptionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return wrapper.response(
+        res,
+        "fail",
+        wrapper.error(new Error(parsed.error.issues[0].message)),
+        "Validation Error",
+        httpError.BAD_REQUEST,
+      );
+    }
+
+    const { notes, items } = parsed.data;
 
     const result = await ConsultationsService.generatePrescription(
       consultationId,
       notes,
+      items,
     );
 
     if (result.err) {
@@ -517,12 +533,10 @@ export const getMyConsultations = async (
 ): Promise<void> => {
   try {
     const userId = req.user!.userId;
-    const role   = req.user!.role;
+    const role = req.user!.role;
 
     const consultations = await prisma.consultation.findMany({
-      where: role === "DOCTOR"
-        ? { doctorId: userId }
-        : { patientId: userId },
+      where: role === "DOCTOR" ? { doctorId: userId } : { patientId: userId },
       include: {
         prescription: {
           include: { items: { include: { product: true } } },
@@ -531,7 +545,7 @@ export const getMyConsultations = async (
       orderBy: { createdAt: "desc" },
     });
 
-    // For doctor: include patient name
+    // For doctor: include patient name; for patient: include doctor name + specialization
     let result: any[] = consultations;
     if (role === "DOCTOR") {
       result = await Promise.all(
@@ -541,6 +555,34 @@ export const getMyConsultations = async (
             select: { id: true, fullName: true, email: true },
           });
           return { ...c, patient };
+        }),
+      );
+    } else {
+      result = await Promise.all(
+        consultations.map(async (c) => {
+          const doctor = await prisma.user.findUnique({
+            where: { id: c.doctorId },
+            select: {
+              id: true,
+              fullName: true,
+              doctorProfile: {
+                select: {
+                  specialization: { select: { name: true } },
+                },
+              },
+            },
+          });
+          return {
+            ...c,
+            doctor: doctor
+              ? {
+                  id: doctor.id,
+                  fullName: doctor.fullName,
+                  specialization:
+                    doctor.doctorProfile?.specialization?.name ?? null,
+                }
+              : null,
+          };
         }),
       );
     }
@@ -572,7 +614,8 @@ export const verifyPayment = async (
 ): Promise<void> => {
   try {
     const consultationId = parseInt(req.params.id as string, 10);
-    const result = await ConsultationsService.verifyPaymentStatus(consultationId);
+    const result =
+      await ConsultationsService.verifyPaymentStatus(consultationId);
 
     if (result.err) {
       return wrapper.response(

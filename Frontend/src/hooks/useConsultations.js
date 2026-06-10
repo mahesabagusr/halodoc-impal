@@ -81,3 +81,11 @@ export function useVerifyPayment(consultationId, options = {}) {
     ...options,
   });
 }
+
+export function useGeneratePrescription(consultationId, options = {}) {
+  return useApiMutation({
+    url: `consultations/${consultationId}/prescriptions`,
+    method: "POST",
+    ...options,
+  });
+}

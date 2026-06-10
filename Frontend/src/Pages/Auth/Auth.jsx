@@ -22,6 +22,8 @@ function AuthPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("login");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     mutateAsync: login,
@@ -92,7 +94,7 @@ function AuthPage() {
     }
   };
 
-  const inputBaseClass = "w-full rounded-xl border bg-surface px-3 py-2.5 text-[14px] text-text-primary transition outline-none placeholder:text-[#9CA3AF]";
+  const inputBaseClass = "w-full rounded-xl border bg-surface px-3 py-2.5 text-[14px] text-text-primary transition outline-none placeholder:text-[#9CA3AF] [&::-ms-reveal]:hidden [&::-ms-clear]:hidden";
   const inputDefaultClass = `${inputBaseClass} border-border focus:border-primary focus:shadow-[0_0_0_3px_rgba(255,92,138,0.1)]`;
   const inputErrorClass = `${inputBaseClass} border-error focus:border-error`;
 
@@ -293,14 +295,23 @@ function AuthPage() {
                 <label className="mb-1 block text-[14px] font-medium text-text-primary">
                   Password
                 </label>
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Buat password"
-                  className={getFieldError(registerError, "password") ? inputErrorClass : inputDefaultClass}
-                  value={registerForm.password}
-                  onChange={handleRegisterChange}
-                />
+                <div className="relative">
+                  <input
+                    type={showRegisterPassword ? "text" : "password"}
+                    name="password"
+                    placeholder="Buat password"
+                    className={`${getFieldError(registerError, "password") ? inputErrorClass : inputDefaultClass} pr-10`}
+                    value={registerForm.password}
+                    onChange={handleRegisterChange}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#9CA3AF] transition-colors hover:text-text-primary"
+                    onClick={() => setShowRegisterPassword((prev) => !prev)}
+                  >
+                    {showRegisterPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
                 {getFieldError(registerError, "password") && (
                   <span className="mt-1 block text-[11px] text-error">
                     {getFieldError(registerError, "password")}
@@ -311,14 +322,23 @@ function AuthPage() {
                 <label className="mb-1 block text-[14px] font-medium text-text-primary">
                   Konfirmasi Password
                 </label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  placeholder="Ulangi password"
-                  className={getFieldError(registerError, "confirmPassword") ? inputErrorClass : inputDefaultClass}
-                  value={registerForm.confirmPassword}
-                  onChange={handleRegisterChange}
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    placeholder="Ulangi password"
+                    className={`${getFieldError(registerError, "confirmPassword") ? inputErrorClass : inputDefaultClass} pr-10`}
+                    value={registerForm.confirmPassword}
+                    onChange={handleRegisterChange}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#9CA3AF] transition-colors hover:text-text-primary"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
                 {getFieldError(registerError, "confirmPassword") && (
                   <span className="mt-1 block text-[11px] text-error">
                     {getFieldError(registerError, "confirmPassword")}

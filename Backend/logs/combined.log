@@ -59,3 +59,12 @@
 2026-05-06 02:52:45 [info]: Creating Account: smith@example.com as DOCTOR
 2026-05-06 02:56:50 [info]: Creating Account: smith@example.com as DOCTOR
 2026-06-02 15:02:35 [info]: Creating Account: mhmdmulna@yahoo.com as PATIENT
+2026-06-04 19:27:20 [error]: Error fetching my consultations: 
+Invalid `prisma.consultation.findMany()` invocation in
+C:\Users\Mahesa\Documents\Vscode\IMPAL\Backend\src\modules\Consultations\controllers\consultations-controllers.ts:522:53
+
+  519 const userId = req.user!.userId;
+  520 const role   = req.user!.role;
+  521 
+→ 522 const consultations = await prisma.consultation.findMany(
+Can't reach database server at aws-1-ap-northeast-2.pooler.supabase.com
