@@ -25,7 +25,7 @@ Based on the code analysis of the [Frontend](file:///c:/Users/mhmdm/OneDrive/Doc
 | [SpecializationSelect.jsx](file:///c:/Users/mhmdm/OneDrive/Documents/GitHub/halodoc-impal/Frontend/src/Pages/Consultations/SpecializationSelect.jsx#L3-L94) | Specialization Cards | Uses a different gradient-based card background and icon styling for every single specialization, resulting in visual clutter. | Standardize all card containers using a single solid background and consistent typography scale. |
 | [DoctorRequests.jsx](file:///c:/Users/mhmdm/OneDrive/Documents/GitHub/halodoc-impal/Frontend/src/Pages/Consultations/DoctorRequests.jsx#L72) | Request Cards | Uses gradients (`from-teal-500 to-cyan-400`) and emojis (`⏱`, `✕`, `✓`), creating a visual discrepancy against other modules. | Unify card surfaces using solid borders, drop shadows, and Lucide vector icons. |
 | Shared Cards | [DoctorCard.jsx](file:///c:/Users/mhmdm/OneDrive/Documents/GitHub/halodoc-impal/Frontend/src/components/DoctorCard.jsx#L5) & [ProductCard.jsx](file:///c:/Users/mhmdm/OneDrive/Documents/GitHub/halodoc-impal/Frontend/src/components/ProductCard.jsx#L5) | The fallback image container uses a linear gradient (`bg-linear-to-b from-slate-100 to-slate-200`) violating the solid-only rule. | Change to solid `#F3F4F6` placeholder color. |
-| Codebase-wide | Asset Icons | Mixed usage of raw emojis (`🏥`, `👶`, `🫁`, `🤰`, `🧠`, `❤️`, `👁️`, `🧴`, `👂`, `🦷`, `👥`, `🏅`, `⭐`, `⏳`, `✅`, `❌`, `👈`) and custom inline SVGs. | Deprecate all emojis in the UI interface. Consolidate to **Lucide Icons** as the single source. |
+| Codebase-wide | Asset Icons | Deprecate all emojis in the UI interface. Consolidate to **Lucide Icons** as the single source. |
 
 ---
 

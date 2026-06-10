@@ -108,3 +108,9 @@ button:not(:disabled):hover {
   background: var(--color-border);
   border-radius: 999px;
 }
+
+/* ─── Hide Edge Default Reveal/Clear Indicators ───────────── */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none !important;
+}
