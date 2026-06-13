@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useLogin, useRegister } from "../../hooks";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -20,6 +20,8 @@ const INITIAL_REGISTER_FORM = {
 
 function AuthPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = location.state?.from?.pathname || "/";
   const [activeTab, setActiveTab] = useState("login");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
 
@@ -66,7 +68,7 @@ function AuthPage() {
           data.token || data.accessToken || data.access_token,
         );
       }
-      navigate("/");
+      navigate(redirectTo, { replace: true });
     } catch (error) {
       console.error("Login failed:", error);
     }
