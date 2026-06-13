@@ -1,5 +1,5 @@
 import prisma from "@/helpers/db/prisma/client";
-import { ConsultationStatus, PaymentStatus } from "@/generated/prisma";
+import { ConsultationStatus, PaymentStatus } from "@prisma/client";
 
 export default class ConsultationsRepository {
   static async cancelExpiredConsultations() {

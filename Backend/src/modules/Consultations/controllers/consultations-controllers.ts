@@ -7,7 +7,7 @@ import logger from "@/helpers/utils/winston";
 import { Request, Response } from "express";
 import ConsultationsService from "@/modules/Consultations/services/consultations-services";
 import ConsultationsRepository from "@/modules/Consultations/repositories/consultations-repositories";
-import { ConsultationStatus } from "@/generated/prisma";
+import { ConsultationStatus } from "@prisma/client";
 import { getIO, emitMessageSafely } from "@/helpers/utils/socket";
 import prisma from "@/helpers/db/prisma/client";
 import { CreatePrescriptionSchema } from "@/schemas/consultation-schema";

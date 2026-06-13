@@ -2,7 +2,7 @@ import {
   AdminProfile,
   DoctorProfile,
   PatientProfile,
-} from "@/generated/prisma";
+} from "@prisma/client";
 import UsersRepository from "@/modules/Users/repositories/users-repositories";
 
 export interface RegisterPayload {

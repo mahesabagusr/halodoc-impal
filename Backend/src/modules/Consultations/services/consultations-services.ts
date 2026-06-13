@@ -3,7 +3,7 @@ import { NotFoundError, BadRequestError } from "@/helpers/error";
 import { ResponseResult } from "@/interfaces/wrapper-interface";
 import ConsultationsRepository from "@/modules/Consultations/repositories/consultations-repositories";
 import prisma from "@/helpers/db/prisma/client";
-import { ConsultationStatus } from "@/generated/prisma";
+import { ConsultationStatus } from "@prisma/client";
 import { getIO } from "@/helpers/utils/socket";
 import { snap, coreApi } from "@/helpers/utils/midtrans";
 import crypto from "crypto";
