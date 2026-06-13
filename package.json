@@ -1,0 +1,8 @@
+{
+  "name": "impal",
+  "private": true,
+  "scripts": {
+    "build": "cd Backend && npm install && npx prisma generate && npm run build",
+    "start": "cd Backend && npm start"
+  }
+}

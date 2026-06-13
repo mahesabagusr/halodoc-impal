@@ -1,0 +1,5 @@
+[build]
+buildCommand = "cd Backend && npm install && npx prisma generate && npm run build"
+
+[deploy]
+startCommand = "cd Backend && npm start"
