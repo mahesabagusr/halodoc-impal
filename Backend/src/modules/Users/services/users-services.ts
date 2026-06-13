@@ -16,7 +16,7 @@ import {
 } from "@/interfaces/users-interface";
 import { createToken, verifyRefreshToken } from "@/middlewares/jwt";
 import UsersRepository from "@/modules/Users/repositories/users-repositories";
-import { Role } from "@/generated/prisma";
+import { Role } from "@prisma/client";
 
 export default class UserService {
   static async createUserByRole(
