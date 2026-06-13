@@ -1,6 +1,7 @@
 import "./App.css";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import PublicLayout from "./layout/PublicLayout";
+import ProtectedRoute from "./layout/ProtectedRoute";
 import HomePage from "./Pages/Home/Home";
 import AuthPage from "./Pages/Auth/Auth";
 import NotFound from "./Pages/NotFound";
@@ -38,35 +39,45 @@ const routes = createBrowserRouter([
         element: <ProductDetailPage />,
       },
       {
-        path: "consultations",
-        element: <SpecializationSelect />,
-      },
-      {
-        path: "consultations/doctors",
-        element: <DoctorList />,
-      },
-      {
-        path: "consultations/doctors/:doctorId",
-        element: <DoctorDetail />,
-      },
-      {
-        path: "consultations/:id/payment",
-        element: <ConsultationPayment />,
-      },
-      {
-        path: "consultations/success",
-        element: <ConsultationSuccess />,
-      },
-      {
-        path: "history",
-        element: <MyConsultations />,
+        element: <ProtectedRoute />,
+        children: [
+          {
+            path: "consultations",
+            element: <SpecializationSelect />,
+          },
+          {
+            path: "consultations/doctors",
+            element: <DoctorList />,
+          },
+          {
+            path: "consultations/doctors/:doctorId",
+            element: <DoctorDetail />,
+          },
+          {
+            path: "consultations/:id/payment",
+            element: <ConsultationPayment />,
+          },
+          {
+            path: "consultations/success",
+            element: <ConsultationSuccess />,
+          },
+          {
+            path: "history",
+            element: <MyConsultations />,
+          },
+        ],
       },
     ],
   },
   // ── Full-screen routes (no Navbar/Footer) ─────────────────────
   {
-    path: "/consultations/:id/chat",
-    element: <ConsultationChat />,
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: "/consultations/:id/chat",
+        element: <ConsultationChat />,
+      },
+    ],
   },
   {
     path: "/doctor/dashboard",

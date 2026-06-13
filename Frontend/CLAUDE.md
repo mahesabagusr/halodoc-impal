@@ -12,6 +12,7 @@
 ### New Reusable Component (shared across features)
 - `src/components/YourComponent.jsx`
 
+
 ### New Feature-Scoped Component (used only inside one feature)
 - `src/Pages/<FeatureName>/components/YourComponent.jsx`
 

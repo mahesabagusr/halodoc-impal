@@ -5,8 +5,8 @@ import {
   useConsultationDetail,
   usePayConsultation,
 } from "../../../hooks/useConsultations";
-import { AlertTriangle } from "lucide-react";
-import { formatCurrency } from "../helpers/formatters";
+import { AlertTriangle, UserRound, Stethoscope, CalendarDays } from "lucide-react";
+import { formatCurrency, formatShortDate } from "../helpers/formatters";
 
 import PaymentSkeleton from "../components/PaymentSkeleton";
 import StatusBadge from "../components/StatusBadge";
@@ -86,25 +86,11 @@ export default function ConsultationPayment() {
 
   const consData = consultation?.data || consultation;
   const isPaid = consData?.paymentStatus === "PAID";
+  const doctor = consData?.doctor;
+  const specialization = doctor?.doctorProfile?.specialization?.name;
 
   return (
     <div className="bg-surface min-h-screen">
-      {/* ── Hero Banner ──────────────────────────────────────────────── */}
-      <section className="border-border bg-background border-b py-[34px] sm:py-[55px]">
-        <div className="mx-auto max-w-[1152px] px-4 text-center sm:px-6 lg:px-8">
-          <span className="bg-primary-light text-primary mb-3 inline-flex rounded-full px-3 py-1 text-[11px] font-semibold tracking-widest uppercase">
-            Konsultasi Online
-          </span>
-          <h1 className="text-text-primary mt-2 text-[32px] leading-[1.25] font-bold tracking-[-0.01em]">
-            Konfirmasi Pembayaran
-          </h1>
-          <p className="text-text-secondary mx-auto mt-4 max-w-lg text-[14px] leading-[1.55]">
-            Periksa ringkasan pesanan konsultasi dan selesaikan pembayaran untuk
-            terhubung dengan dokter.
-          </p>
-        </div>
-      </section>
-
       {/* ── Payment Card ─────────────────────────────────────────────── */}
       <section className="py-[34px] sm:py-[55px]">
         <div className="mx-auto max-w-[550px] px-4 sm:px-6">
@@ -116,6 +102,33 @@ export default function ConsultationPayment() {
               </h2>
             </div>
 
+            {/* Doctor profile */}
+            {doctor && (
+              <div className="border-border flex items-center gap-4 border-b px-6 py-5">
+                <div className="bg-primary-light flex h-14 w-14 shrink-0 items-center justify-center rounded-full">
+                  <UserRound
+                    size={26}
+                    strokeWidth={1.75}
+                    className="text-primary"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-text-secondary text-[11px] font-bold tracking-wider uppercase">
+                    Dokter
+                  </p>
+                  <p className="text-text-primary truncate text-[16px] font-semibold">
+                    {doctor.fullName}
+                  </p>
+                  {specialization && (
+                    <span className="text-primary mt-1 inline-flex items-center gap-1 text-[12px] font-medium">
+                      <Stethoscope size={13} strokeWidth={2} />
+                      {specialization}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Order Details */}
             <div className="divide-border divide-y px-6">
               <div className="flex items-center justify-between py-4">
@@ -126,6 +139,18 @@ export default function ConsultationPayment() {
                   CONS-{consData?.id}
                 </span>
               </div>
+
+              {consData?.createdAt && (
+                <div className="flex items-center justify-between py-4">
+                  <span className="text-text-secondary flex items-center gap-1.5 text-[14px]">
+                    <CalendarDays size={15} strokeWidth={2} />
+                    Tanggal Konsultasi
+                  </span>
+                  <span className="text-text-primary text-[14px] font-semibold">
+                    {formatShortDate(consData.createdAt)}
+                  </span>
+                </div>
+              )}
 
               <div className="flex items-center justify-between py-4">
                 <span className="text-text-secondary text-[14px]">
