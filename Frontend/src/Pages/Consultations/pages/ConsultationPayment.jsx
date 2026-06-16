@@ -1,9 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useMidtrans } from "../../../hooks/useMidtrans";
 import {
   useConsultationDetail,
   usePayConsultation,
+  useVerifyPayment,
 } from "../../../hooks/useConsultations";
 import { AlertTriangle, UserRound, Stethoscope, CalendarDays } from "lucide-react";
 import { formatCurrency, formatShortDate } from "../helpers/formatters";
@@ -25,14 +28,39 @@ export default function ConsultationPayment() {
     refetch,
   } = useConsultationDetail(id);
 
+  const queryClient = useQueryClient();
+
+  // Recovery safety-net: if a payment was already initiated (midtransUrl set)
+  // but the status is still PENDING, re-verify with Midtrans. This recovers
+  // consultations that were paid but never marked PAID (e.g. webhook couldn't
+  // reach localhost, or the user closed the success page early).
+  const currentData = consultation?.data || consultation;
+  const needsVerify =
+    currentData?.paymentStatus === "PENDING" && !!currentData?.midtransUrl;
+  const { data: verifyData } = useVerifyPayment(id, { enabled: needsVerify });
+
+  useEffect(() => {
+    if (verifyData?.data?.paymentStatus === "PAID") {
+      queryClient.invalidateQueries({ queryKey: ["consultation", id] });
+      queryClient.invalidateQueries({ queryKey: ["my-consultations"] });
+    }
+  }, [verifyData, id, queryClient]);
+
   const paymentMutation = usePayConsultation(id, {
     onSuccess: (res) => {
       if (res?.data?.midtransToken) {
+        // orderId saved by the backend (stored in midtransUrl) — matches CONS-{id}-{timestamp}.
+        // Pass it along so the success page can verify the payment status with Midtrans.
+        const orderId = res.data.midtransUrl || `CONS-${id}-`;
         pay(
           res.data.midtransToken,
           (result) => {
             console.log("Success:", result);
-            navigate("/consultations/success");
+            const oid = result?.order_id || orderId;
+            const status = result?.transaction_status || "settlement";
+            navigate(
+              `/consultations/success?order_id=${encodeURIComponent(oid)}&transaction_status=${encodeURIComponent(status)}`,
+            );
           },
           (result) => {
             console.log("Pending:", result);
